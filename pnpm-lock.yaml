@@ -70,6 +70,12 @@ importers:
         specifier: ^15.0.4
         version: 15.0.4
 
+  packages/project-analyzer:
+    dependencies:
+      '@letscoding/policy-contract':
+        specifier: workspace:*
+        version: link:../policy-contract
+
   plugins/lounge-deploy: {}
 
   tests/policy-contract:
