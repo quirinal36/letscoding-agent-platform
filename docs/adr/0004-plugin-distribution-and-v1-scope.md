@@ -34,7 +34,7 @@
 ### 배포 방식
 
 1. 최종 배포 목표는 ChatGPT와 Codex가 공유하는 공개 universal plugin directory다.
-2. 개발 중에는 personal/repository marketplace로만 배포한다. `staging` 인증과 새 계정 E2E gate를 통과하기 전 공개 제출하지 않는다.
+2. 개발 중에는 personal/repository marketplace로만 배포한다. `staging` 익명 접근·남용 통제와 새 계정 E2E gate를 통과하기 전 공개 제출하지 않는다.
 3. Plugin은 `.codex-plugin/plugin.json`, 최소 Lounge Deploy Skill, 등록된 MCP server connection을 포함한다. credential, access/refresh token, Supabase key, 세부 용량/확장자 정책은 포함하지 않는다.
 4. 1차 remote call은 ADR-0002에 따라 익명으로 제공하되 public policy와 제한된 입력만 다루며 payload/rate-limit 통제를 통과해야 한다.
 5. 공개 Plugin의 설명에는 데이터 전송 범위, 중앙 비저장 원칙, 자동 업로드 비범위, 지원/보안 연락처를 명시한다.
@@ -78,7 +78,7 @@ Plugin과 MCP는 1차에서 업로드가 완료된 것처럼 표현하지 않는
 ## 결과와 트레이드오프
 
 - 조직에 속하지 않은 대상 Codex 계정도 같은 설치 경로를 사용할 수 있다.
-- 누구나 Plugin을 발견할 수 있지만 인증되지 않은 사용자는 MCP 데이터/도구를 사용할 수 없다.
+- 누구나 Plugin을 발견하고 익명 public MCP를 사용할 수 있지만, public 정책과 제한된 입력·도구·rate limit 경계만 제공한다.
 - 공개 심사와 지원 준비 때문에 초기 출시 일정이 길어질 수 있다. 그동안 repository/personal marketplace로 검증한다.
 - 실제 업로드를 제외해 사용자는 ZIP을 Lounge에 직접 올려야 하지만 1차의 권한·데이터·실수 반경을 작게 유지한다.
 
