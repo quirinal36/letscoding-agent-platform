@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   createLoungeDeployHttpHandler,
   createNodeHttpServer,
+  createReport,
   loadMcpConfig,
   MCP_TOOL_NAMES,
   McpDomainError,
@@ -138,12 +139,7 @@ function successHandlers(): LoungeDeployToolHandlers {
       };
     },
     async create_report(input) {
-      return {
-        policyId: input.policyId,
-        policyVersion: input.policyVersion,
-        markdown: "# 완료 보고",
-        json: { pass: true },
-      };
+      return createReport(input);
     },
   };
 }

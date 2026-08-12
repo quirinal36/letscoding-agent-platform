@@ -36,8 +36,12 @@ envelope를 사용한다. unknown 입력 필드는 handler 실행 전에 거부�
 `validate_artifact`도 #11에서 공용 artifact validator에 연결했다. 로컬 검사 결과와
 manifest의 digest·파일 수·크기 합계를 교차 확인하고, 요청 시작/종료의 활성 정책을
 다시 읽어 같은 버전일 때만 최종 성공한다. 정책이 바뀌면 새 정책으로 manifest를
-판정하되 `REVALIDATION_REQUIRED`를 반환한다. 나머지 handler는 후속 이슈에서
-연결하며, 연결 전에는 `TOOL_NOT_IMPLEMENTED` domain 오류로 fail-closed한다.
+판정하되 `REVALIDATION_REQUIRED`를 반환한다.
+
+`create_report`는 #12에서 분석과 최종 검증의 명시적 결과를 안정적인 JSON과 한국어
+Markdown으로 변환한다. 최종 검증·분석·정책이 모두 성공하고 일치할 때만 완료로
+표현한다. client 문자열은 단일 행·비밀값 차단 계약을 거치고 Markdown 구조에 맞게
+escape한다. 보고서는 서버에 저장하지 않는다.
 
 정책은 빌드 전에 다음 명령으로 검증해 TypeScript bundle로 생성한다. 생성 파일은
 직접 편집하지 않는다.
