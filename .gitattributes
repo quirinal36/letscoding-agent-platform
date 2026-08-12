@@ -1,0 +1,6 @@
+# 모든 플랫폼에서 작업 트리 줄바꿈을 LF로 고정한다.
+#
+# Windows는 checkout 시 CRLF로 바꾸는 것이 기본이다. 그러면 Prettier의
+# endOfLine "lf" 검사가 모든 파일을 위반으로 잡고, 발행된 정책 가이드의
+# sha256 검증도 플랫폼마다 다른 결과를 낸다.
+* text=auto eol=lf
