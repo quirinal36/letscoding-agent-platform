@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+  merge_group:
   push:
     branches:
       - main
@@ -24,6 +25,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -39,3 +42,41 @@ jobs:
 
       - name: Run repository checks
         run: pnpm run ci
+
+      - name: Enforce immutable policy history
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          POLICY_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+        run: pnpm verify:policy-change
+
+      - name: Create auditable source artifact
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm release:bundle
+
+      - name: Upload source artifact and manifest
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-source-${{ github.sha }}
+          path: artifacts/release/
+          if-no-files-found: error
+          retention-days: 30
+
+  dependency-audit:
+    name: Dependency audit / high+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Enable the pinned pnpm release
+        run: corepack enable
+
+      - name: Audit production dependency graph
+        run: pnpm audit:dependencies

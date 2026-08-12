@@ -26,6 +26,8 @@
     "category": "Developer Tools",
     "capabilities": ["Interactive", "Write"],
     "websiteURL": "https://github.com/quirinal36/letscoding-agent-platform",
+    "privacyPolicyURL": "https://github.com/quirinal36/letscoding-agent-platform/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/quirinal36/letscoding-agent-platform/blob/main/TERMS.md",
     "defaultPrompt": [
       "이 프로젝트를 라운지 작품 업로드용 ZIP으로 만들고 검증해줘",
       "이 Vite 프로젝트를 라운지용 정적 ZIP으로 만들어줘",

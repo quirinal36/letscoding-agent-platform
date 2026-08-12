@@ -18,15 +18,18 @@ pnpm check
 
 ## 명령
 
-| 명령                | 설명                                           |
-| ------------------- | ---------------------------------------------- |
-| `pnpm lint`         | 전체 TypeScript와 JavaScript lint              |
-| `pnpm format`       | Prettier로 지원 파일 포맷                      |
-| `pnpm format:check` | 포맷 변경 없이 검사                            |
-| `pnpm typecheck`    | 모든 workspace 타입 검사                       |
-| `pnpm test`         | 모든 workspace test 실행                       |
-| `pnpm build`        | 의존 순서대로 모든 workspace 빌드              |
-| `pnpm check`        | lint, format, build, typecheck, test 전체 실행 |
+| 명령                      | 설명                                               |
+| ------------------------- | -------------------------------------------------- |
+| `pnpm lint`               | 전체 TypeScript와 JavaScript lint                  |
+| `pnpm format`             | Prettier로 지원 파일 포맷                          |
+| `pnpm format:check`       | 포맷 변경 없이 검사                                |
+| `pnpm typecheck`          | 모든 workspace 타입 검사                           |
+| `pnpm test`               | 모든 workspace test 실행                           |
+| `pnpm build`              | 의존 순서대로 모든 workspace 빌드                  |
+| `pnpm check`              | lint, format, build, typecheck, test 전체 실행     |
+| `pnpm audit:dependencies` | production graph의 high 이상 advisory 검사         |
+| `pnpm verify:plugin`      | Plugin manifest, MCP, Skill, marketplace 계약 검사 |
+| `pnpm verify:secrets`     | Git 추적 파일의 credential 패턴 검사               |
 
 개별 workspace에서도 같은 `lint`, `typecheck`, `test`, `build` 명령을 실행할 수 있다.
 
@@ -47,6 +50,8 @@ packages/mcp-auth/            MCP 인증·권한 공통 모듈
 packages/audit-log/           감사 로그 공통 모듈
 policies/lounge-deploy/       중앙 정책 원본
 tests/policy-contract/        발행된 정책 트리의 참조 무결성 테스트
+tests/plugin-e2e/             실제 Vite/Next build 포함 clean-room Plugin E2E
+tests/operations/             정책 불변성·배포 workflow 운영 계약 테스트
 tests/fixtures/               공용 테스트 fixture
 ```
 
@@ -73,3 +78,13 @@ Vercel `icn1` adapter를 제공한다. 도구별 domain 로직은 후속 이슈�
 검사 API/CLI를 제공한다. ZIP byte와 파일 내용을 결과에 복사하지 않으며 stream
 inflate 제한, CRC/SHA-256, symlink 차단을 적용한다. MCP 인증과 Plugin 동작은
 후속 이슈에서 구현한다.
+
+운영 절차는 [운영 인덱스](docs/operations/README.md)에 있다. CI는 세 운영체제의 전체
+검사, high dependency audit, 정책 history 불변성, Plugin/비밀 검사와 revision별 source
+artifact를 제공한다. production은 수동 workflow가 main의 정확한 SHA를 staging에서
+검증하고 traffic 없는 production deployment를 smoke한 뒤 승인된 같은 deployment만
+promote한다.
+
+Plugin은 로컬 ZIP을 만들고 검증할 뿐 실제 Lounge 등록·업로드·공개를 하지 않는다.
+지원, 보안 신고, 개인정보 및 이용 조건은 각각 [SUPPORT.md](SUPPORT.md),
+[SECURITY.md](SECURITY.md), [PRIVACY.md](PRIVACY.md), [TERMS.md](TERMS.md)를 따른다.
