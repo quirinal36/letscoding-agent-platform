@@ -2,3 +2,4 @@ packages:
   - apps/*
   - plugins/*
   - packages/*
+  - tests/policy-contract

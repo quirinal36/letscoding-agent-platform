@@ -24,11 +24,16 @@ pnpm check
 | `pnpm format`       | Prettier로 지원 파일 포맷                      |
 | `pnpm format:check` | 포맷 변경 없이 검사                            |
 | `pnpm typecheck`    | 모든 workspace 타입 검사                       |
-| `pnpm test`         | 모든 workspace smoke test 실행                 |
+| `pnpm test`         | 모든 workspace test 실행                       |
 | `pnpm build`        | 의존 순서대로 모든 workspace 빌드              |
-| `pnpm check`        | lint, format, typecheck, test, build 전체 실행 |
+| `pnpm check`        | lint, format, build, typecheck, test 전체 실행 |
 
 개별 workspace에서도 같은 `lint`, `typecheck`, `test`, `build` 명령을 실행할 수 있다.
+
+`tests/policy-contract`처럼 다른 workspace 패키지를 `workspace:*`로 참조하는
+workspace는 그 패키지의 `dist` 타입 선언을 사용한다. 따라서 `build`가
+`typecheck`, `test`보다 먼저 실행된다. 깨끗한 checkout에서는 `pnpm check` 또는
+`pnpm build` 뒤에 개별 명령을 실행한다.
 
 ## 저장소 구조
 
@@ -40,9 +45,13 @@ packages/artifact-validator/  artifact 검증기
 packages/mcp-auth/            MCP 인증·권한 공통 모듈
 packages/audit-log/           감사 로그 공통 모듈
 policies/lounge-deploy/       중앙 정책 원본
-tests/policy-contract/        정책 계약 통합·fixture 테스트
+tests/policy-contract/        발행된 정책 트리의 참조 무결성 테스트
 tests/fixtures/               공용 테스트 fixture
 ```
+
+`policies/`는 Prettier 대상이 아니다. 발행된 스냅샷은 불변이고
+`framework-guide.md`는 활성 스냅샷과 byte 단위로 같아야 하므로, 재포맷이 정책
+해시와 복사본 일치를 깨뜨린다.
 
 ## Workspace 규칙
 
@@ -53,4 +62,4 @@ tests/fixtures/               공용 테스트 fixture
 - 소비자는 패키지 루트만 import한다. `exports`가 선언하지 않은 deep import는 허용하지 않는다.
 - 빌드는 ESM JavaScript, source map, TypeScript 선언과 declaration map을 `dist/`에 생성한다.
 
-현재 workspace의 소스는 후속 기능 이슈를 위한 빈 공개 entry point와 smoke test만 포함한다. 정책 규칙, artifact 검증, MCP 인증과 Plugin 동작은 이 단계의 범위가 아니다.
+`packages/policy-contract`는 정책 Schema·타입·버전 규칙·오류 코드 계약을 제공한다. 자세한 규칙은 [패키지 README](packages/policy-contract/README.md)에 있다. 나머지 workspace의 소스는 후속 기능 이슈를 위한 빈 공개 entry point와 smoke test만 포함한다. artifact 검증, MCP 인증과 Plugin 동작은 아직 구현하지 않았다.

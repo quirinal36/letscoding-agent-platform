@@ -6,3 +6,10 @@ pnpm-lock.yaml
 # Existing planning and approved ADR records predate formatter adoption.
 24-letscoding-agent-platform-plan.md
 docs/adr
+
+# 발행된 정책 snapshot은 불변이고, framework-guide.md는 활성 snapshot과
+# byte 단위로 같아야 한다. 재포맷이 정책 해시와 복사본 일치를 깨뜨린다.
+policies
+
+# 생성물은 생성기가 직접 포맷한다.
+packages/policy-contract/src/generated

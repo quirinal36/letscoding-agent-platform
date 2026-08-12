@@ -11,11 +11,12 @@
   "workspaces": [
     "apps/*",
     "plugins/*",
-    "packages/*"
+    "packages/*",
+    "tests/policy-contract"
   ],
   "scripts": {
     "build": "pnpm --recursive --if-present run build",
-    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
+    "check": "pnpm lint && pnpm format:check && pnpm build && pnpm typecheck && pnpm test",
     "ci": "pnpm verify:package-manager && pnpm check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -3,7 +3,13 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/coverage/**", "**/dist/**", "**/node_modules/**"],
+    ignores: [
+      "**/coverage/**",
+      "**/dist/**",
+      "**/node_modules/**",
+      // Schema에서 생성한 파일은 생성기가 형식을 책임진다.
+      "**/src/generated/**",
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
