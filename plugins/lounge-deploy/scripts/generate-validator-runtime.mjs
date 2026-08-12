@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, rm, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath, URL } from "node:url";
@@ -15,6 +15,7 @@ await copyJavaScript(
   `${repositoryRoot}packages/artifact-validator/dist`,
   `${runtimeRoot}artifact-validator`,
 );
+await chmod(`${runtimeRoot}artifact-validator/cli.js`, 0o755);
 await copyJavaScript(
   `${repositoryRoot}packages/policy-contract/dist`,
   `${runtimeRoot}node_modules/@letscoding/policy-contract`,
