@@ -58,6 +58,12 @@ export interface ArtifactInspectionFinding {
   readonly message: string;
   /** Entry index is safe to return; the potentially sensitive path is not. */
   readonly entryIndex?: number;
+  /** Central policy rule corresponding to the low-level parser failure. */
+  readonly policyRule?: {
+    readonly code: string;
+    readonly severity: "error" | "warning";
+    readonly message: string;
+  };
 }
 
 export interface ArtifactMetadata {
@@ -150,7 +156,7 @@ async function inspectZip(
     const directory = await readZipDirectory(
       handle,
       compressedBytes,
-      options.policy.limits.maxFiles,
+      options.policy.limits.maxEntries ?? options.policy.limits.maxFiles,
     );
     let actualTotal = 0;
     let declaredTotal = 0;
@@ -587,9 +593,35 @@ function inspectionFailure(
       fileCount: partial?.fileCount ?? 0,
       artifactSha256: null,
     },
-    inspectionErrors: findings,
+    inspectionErrors: findings.map((finding) =>
+      attachPolicyRule(finding, options.policy),
+    ),
     validation: null,
   };
+}
+
+function attachPolicyRule(
+  finding: ArtifactInspectionFinding,
+  policy: ArtifactValidationPolicy,
+): ArtifactInspectionFinding {
+  const policyRule = inspectionPolicyRule(finding.code, policy);
+  return policyRule === undefined ? finding : { ...finding, policyRule };
+}
+
+function inspectionPolicyRule(
+  code: ArtifactInspectionCode,
+  policy: ArtifactValidationPolicy,
+) {
+  if (code === "ZIP_ENTRY_LIMIT_EXCEEDED") {
+    return policy.inspection?.tooManyEntries;
+  }
+  if (code === "ZIP_ENTRY_SIZE_MISMATCH" || code === "ZIP_CRC_MISMATCH") {
+    return policy.inspection?.invalidEntrySize;
+  }
+  if (code === "ZIP_INFLATE_LIMIT_EXCEEDED") {
+    return policy.rules["uncompressed-size-exceeded"];
+  }
+  return code.startsWith("ZIP") ? policy.inspection?.invalidFormat : undefined;
 }
 
 interface PartialMetadata {

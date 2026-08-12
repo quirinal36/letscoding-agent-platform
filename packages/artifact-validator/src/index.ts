@@ -51,6 +51,8 @@ export interface ArtifactValidationPolicy {
     readonly maxCompressedBytes: number;
     readonly maxUncompressedBytes: number;
     readonly maxFiles: number;
+    /** Central-directory entries, including directory entries. */
+    readonly maxEntries?: number;
     readonly maxPathLength: number;
   };
   readonly files: {
@@ -83,6 +85,7 @@ export interface ArtifactValidationPolicy {
     readonly rootFile: string;
     readonly forbidWrapperDirectory: boolean;
   };
+  readonly inspection?: ArtifactInspectionPolicy;
   /** Missing rule definitions disable the corresponding check. */
   readonly rules: Partial<
     Readonly<Record<ArtifactValidationRuleId, ArtifactValidationRule>>
@@ -91,8 +94,18 @@ export interface ArtifactValidationPolicy {
 
 export interface ArtifactBlockedFilenameRule {
   readonly match: "exact" | "prefix" | "suffix";
+  readonly scope?: "basename" | "path-segment";
+  readonly caseSensitive?: boolean;
   readonly value: string;
   readonly rule: ArtifactValidationRule;
+}
+
+export interface ArtifactInspectionPolicy {
+  readonly allowZip64: boolean;
+  readonly allowMultiDisk: boolean;
+  readonly invalidFormat?: ArtifactValidationRule;
+  readonly tooManyEntries?: ArtifactValidationRule;
+  readonly invalidEntrySize?: ArtifactValidationRule;
 }
 
 export interface ArtifactPathRules {
@@ -480,7 +493,7 @@ function validatePathsAndFiles(
     }
 
     for (const blockedRule of blockedFilenameRules) {
-      if (matchesBlockedFilename(basename, blockedRule)) {
+      if (matchesBlockedFilename(basename, allSegments, blockedRule)) {
         addFinding("blocked-file", [index], blockedRule.rule);
       }
     }
@@ -489,12 +502,20 @@ function validatePathsAndFiles(
 
 function matchesBlockedFilename(
   basename: string,
+  pathSegments: readonly string[],
   blockedRule: ArtifactBlockedFilenameRule,
 ): boolean {
-  const value = blockedRule.value.toLowerCase();
-  if (blockedRule.match === "exact") return basename === value;
-  if (blockedRule.match === "prefix") return basename.startsWith(value);
-  return basename.endsWith(value);
+  const fold = (value: string): string =>
+    blockedRule.caseSensitive === true ? value : value.toLowerCase();
+  const expected = fold(blockedRule.value);
+  const candidates =
+    blockedRule.scope === "path-segment" ? pathSegments : [basename];
+  return candidates.some((candidate) => {
+    const value = fold(candidate);
+    if (blockedRule.match === "exact") return value === expected;
+    if (blockedRule.match === "prefix") return value.startsWith(expected);
+    return value.endsWith(expected);
+  });
 }
 
 function validatePathCollisions(

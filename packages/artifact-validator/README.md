@@ -72,11 +72,11 @@ const result = await inspectArtifact({
 
 ```sh
 lounge-artifact-validate \
-  --policy policies/lounge-deploy/history/2026-08-12.1.json \
+  --policy policies/lounge-deploy/history/2026-08-12.2.json \
   --zip ./artifact.zip
 
 lounge-artifact-validate \
-  --policy policies/lounge-deploy/history/2026-08-12.1.json \
+  --policy policies/lounge-deploy/history/2026-08-12.2.json \
   --directory ./dist
 ```
 

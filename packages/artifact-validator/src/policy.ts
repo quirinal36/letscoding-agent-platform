@@ -96,6 +96,10 @@ export function artifactValidationPolicyFromDocument(
   const blockedFilenameRules: ArtifactBlockedFilenameRule[] =
     document.files.blockedFilenames.map((entry) => ({
       match: entry.match,
+      ...(entry.scope === undefined ? {} : { scope: entry.scope }),
+      ...(entry.caseSensitive === undefined
+        ? {}
+        : { caseSensitive: entry.caseSensitive }),
       value: entry.value,
       rule: ruleFor(entry.code),
     }));
@@ -111,12 +115,18 @@ export function artifactValidationPolicyFromDocument(
     ),
     "extension-not-allowed": ruleFor(document.files.codes.extensionNotAllowed),
   };
+  if (document.zip.codes.invalidEntrySize !== undefined) {
+    rules["file-size-invalid"] = ruleFor(document.zip.codes.invalidEntrySize);
+  }
   assignRule(rules, "path-backslash", pathRules.backslash);
   assignRule(rules, "path-absolute", pathRules.absolute);
   assignRule(rules, "path-dot-segment", pathRules.nonNormalized);
   assignRule(rules, "path-empty-segment", pathRules.nonNormalized);
   assignRule(rules, "path-url-character", pathRules.urlReinterpret);
   assignRule(rules, "path-control-character", pathRules.controlCharacter);
+  if (document.zip.codes.pathTooLong !== undefined) {
+    rules["path-too-long"] = ruleFor(document.zip.codes.pathTooLong);
+  }
   if (document.zip.requireRootIndexHtml) {
     rules["root-file-missing"] = ruleFor(
       document.zip.codes.missingRootIndexHtml,
@@ -130,9 +140,10 @@ export function artifactValidationPolicyFromDocument(
       maxCompressedBytes: document.zip.maxCompressedBytes,
       maxUncompressedBytes: document.zip.maxUncompressedBytes,
       maxFiles: document.zip.maxFiles,
-      // The current central contract has no policy-level path length. The ZIP
-      // reader still applies an implementation safety ceiling before decoding.
-      maxPathLength: Number.MAX_SAFE_INTEGER,
+      ...(document.zip.maxEntries === undefined
+        ? {}
+        : { maxEntries: document.zip.maxEntries }),
+      maxPathLength: document.zip.maxPathLength ?? Number.MAX_SAFE_INTEGER,
     },
     files: {
       allowedExtensions: document.files.allowedExtensions,
@@ -157,6 +168,21 @@ export function artifactValidationPolicyFromDocument(
       // requireRootIndexHtml already rejects a wrapper-only artifact. There is
       // no separate wrapper code in the current central policy.
       forbidWrapperDirectory: false,
+    },
+    inspection: {
+      allowZip64: document.zip.allowZip64 ?? false,
+      allowMultiDisk: document.zip.allowMultiDisk ?? false,
+      ...(document.zip.codes.invalidFormat === undefined
+        ? {}
+        : { invalidFormat: ruleFor(document.zip.codes.invalidFormat) }),
+      ...(document.zip.codes.tooManyEntries === undefined
+        ? {}
+        : { tooManyEntries: ruleFor(document.zip.codes.tooManyEntries) }),
+      ...(document.zip.codes.invalidEntrySize === undefined
+        ? {}
+        : {
+            invalidEntrySize: ruleFor(document.zip.codes.invalidEntrySize),
+          }),
     },
     rules,
   };

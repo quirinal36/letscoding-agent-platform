@@ -23,7 +23,7 @@ import { artifactValidationPolicyFromDocument } from "./policy.js";
 let root: string;
 let fixtures: string;
 const POLICY_PATH = new URL(
-  "../../../policies/lounge-deploy/history/2026-08-12.1.json",
+  "../../../policies/lounge-deploy/history/2026-08-12.2.json",
   import.meta.url,
 ).pathname;
 
@@ -60,7 +60,7 @@ describe("inspectArtifact ZIP", () => {
     expect(result.pass).toBe(true);
     expect(result.metadata.sourceSha256).toMatch(/^[a-f\d]{64}$/);
     expect(result.metadata.artifactSha256).toBe(result.metadata.sourceSha256);
-    expect(result.validation?.policy.version).toBe("2026-08-12.1");
+    expect(result.validation?.policy.version).toBe("2026-08-12.2");
   });
 
   it.each([
@@ -103,6 +103,9 @@ describe("inspectArtifact ZIP", () => {
     expect(result.inspectionErrors.map(({ code }) => code)).toContain(
       expectedCode,
     );
+    expect(result.inspectionErrors[0]?.policyRule?.code).toBe(
+      "LD_ZIP_INVALID_FORMAT",
+    );
     expect(JSON.stringify(result)).not.toContain("<!doctype html>");
   });
 
@@ -124,6 +127,9 @@ describe("inspectArtifact ZIP", () => {
       policy,
     });
     expect(result.inspectionErrors[0]?.code).toBe("ZIP_ENTRY_LIMIT_EXCEEDED");
+    expect(result.inspectionErrors[0]?.policyRule?.code).toBe(
+      "LD_ZIP_TOO_MANY_ENTRIES",
+    );
     expect(result.metadata.fileCount).toBe(policy.limits.maxFiles + 1);
   });
 
@@ -299,7 +305,7 @@ describe("artifact validator CLI", () => {
 
     expect(code).toBe(expected);
     expect(stderr).toBe("");
-    expect(JSON.parse(stdout)).toHaveProperty("policy.version", "2026-08-12.1");
+    expect(JSON.parse(stdout)).toHaveProperty("policy.version", "2026-08-12.2");
   });
 
   it("uses exit code 2 for invalid invocation without exposing local errors", async () => {

@@ -9,7 +9,7 @@ import { artifactValidationPolicyFromDocument } from "./policy.js";
 async function loadPolicy() {
   const text = await readFile(
     new URL(
-      "../../../policies/lounge-deploy/history/2026-08-12.1.json",
+      "../../../policies/lounge-deploy/history/2026-08-12.2.json",
       import.meta.url,
     ),
     "utf8",
@@ -29,7 +29,11 @@ describe("artifactValidationPolicyFromDocument", () => {
         compressedBytes: 10,
         files: [
           { path: "index.html", sizeBytes: 1, sha256: "a".repeat(64) },
-          { path: ".env.production", sizeBytes: 1, sha256: "b".repeat(64) },
+          {
+            path: "config/.env.production/value.js",
+            sizeBytes: 1,
+            sha256: "b".repeat(64),
+          },
           {
             path: "nested/RUNTIME-CONFIG.JS",
             sizeBytes: 1,
@@ -69,5 +73,21 @@ describe("artifactValidationPolicyFromDocument", () => {
         "LD_FILE_EXTENSION_NOT_ALLOWED",
       ]),
     );
+  });
+
+  it("maps entry count, path length, and parser failure policy codes", async () => {
+    const policy = await loadPolicy();
+    expect(policy.limits).toMatchObject({
+      maxEntries: 500,
+      maxPathLength: 180,
+    });
+    expect(policy.rules["path-too-long"]?.code).toBe("LD_PATH_TOO_LONG");
+    expect(policy.inspection).toMatchObject({
+      allowZip64: false,
+      allowMultiDisk: false,
+      invalidFormat: { code: "LD_ZIP_INVALID_FORMAT" },
+      tooManyEntries: { code: "LD_ZIP_TOO_MANY_ENTRIES" },
+      invalidEntrySize: { code: "LD_ENTRY_SIZE_INVALID" },
+    });
   });
 });

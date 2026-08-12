@@ -20,9 +20,9 @@ flag 없이 0x80 이상 byte를 사용하는 오래된 CP437 ZIP은 자동 추�
 출력 폴더에서는 symlink와 일반 파일이 아닌 항목을 거부하고, 열린 파일의
 device/inode/size/mtime을 다시 비교해 검사 중 변경을 fail-closed 처리한다.
 
-현재 중앙 정책 계약에는 최대 경로 길이 값이 없다. 따라서 정책 검증기의 기존
-경로 길이 규칙에는 값을 임의로 하드코딩하지 않고, ZIP parser 자체에만 4 KiB
-entry-name metadata 안전 상한을 적용한다. 이 상한은 제출 정책이 아니라 parser
+중앙 정책의 `maxEntries`, `maxPathLength`, `allowZip64`, `allowMultiDisk`를 직접
+적용한다. 별도로 ZIP parser 자체에는 정책값을 읽기 전에 과도한 metadata 할당을
+막는 4 KiB entry-name 안전 상한을 둔다. 이 상한은 제출 정책이 아니라 parser
 자원 보호 한도다.
 
 ## 대안과 영향
@@ -38,9 +38,8 @@ entry-name metadata 안전 상한을 적용한다. 이 상한은 제출 정책�
 ## 사람 확인이 필요한 시점
 
 실제 사용자 ZIP에서 CP437 또는 ZIP64 거부율이 의미 있게 관측되면 운영자가 지원
-확대를 승인해야 한다. 그때 새 구현과 fixture를 추가한 뒤 이 문서 상태를
-“대체됨”으로 바꾼다. 중앙 정책에 제출 경로 길이를 새로 넣으려면 정책 Schema와
-불변 정책 버전을 함께 발행해야 한다.
+확대를 승인해야 한다. 그때 중앙 정책의 허용값, 새 구현과 fixture를 같은 변경에서
+추가한 뒤 이 문서 상태를 “대체됨”으로 바꾼다.
 
 ## 되돌리기
 
