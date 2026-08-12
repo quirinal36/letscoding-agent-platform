@@ -34,6 +34,8 @@ export interface PolicyDocument {
    * 감사 기록에 남는 변경 사유.
    */
   changeReason: string;
+  governance?: PolicyGovernance;
+  source?: PolicySourceProvenance;
   zip: PolicyZipLimits;
   files: PolicyFileRules;
   assetPaths: PolicyAssetPathRules;
@@ -53,16 +55,49 @@ export interface PolicyDocument {
   guide: PolicyGuideReference;
 }
 /**
+ * 정책 발행의 책임자와 승인 기록.
+ */
+export interface PolicyGovernance {
+  owner: string;
+  approver: string;
+  publishedAt: string;
+}
+/**
+ * 정책을 이관한 원본 저장소, 기준 commit과 파일별 digest.
+ */
+export interface PolicySourceProvenance {
+  repository: string;
+  commit: string;
+  synchronizedAt: string;
+  /**
+   * @minItems 1
+   */
+  files: [PolicySourceFile, ...PolicySourceFile[]];
+}
+export interface PolicySourceFile {
+  path: string;
+  sha256: string;
+}
+/**
  * 제출 ZIP의 크기와 구조 제한.
  */
 export interface PolicyZipLimits {
   maxCompressedBytes: number;
   maxUncompressedBytes: number;
+  maxEntries?: number;
   maxFiles: number;
+  maxPathLength?: number;
+  requireForwardSlashes?: boolean;
   /**
    * ZIP 최상위에 index.html이 있어야 하는지 여부.
    */
   requireRootIndexHtml: boolean;
+  /**
+   * 단일 wrapper 폴더를 제거한 뒤의 루트를 허용하는지 여부.
+   */
+  allowSingleWrapperDirectory?: boolean;
+  allowZip64?: boolean;
+  allowMultiDisk?: boolean;
   codes: PolicyZipCodes;
 }
 export interface PolicyZipCodes {
@@ -70,6 +105,11 @@ export interface PolicyZipCodes {
   uncompressedTooLarge: PolicyCheckCode;
   tooManyFiles: PolicyCheckCode;
   missingRootIndexHtml: PolicyCheckCode;
+  invalidFormat?: PolicyCheckCode;
+  tooManyEntries?: PolicyCheckCode;
+  pathTooLong?: PolicyCheckCode;
+  mixedWrapperRoots?: PolicyCheckCode;
+  invalidEntrySize?: PolicyCheckCode;
 }
 /**
  * 확장자, 파일명, 경로 형태 규칙.
@@ -103,6 +143,14 @@ export interface PolicyBlockedFilename {
    * value를 파일명과 비교하는 방식.
    */
   match: "exact" | "prefix" | "suffix";
+  /**
+   * basename만 비교할지 경로의 모든 세그먼트를 비교할지 지정한다. 생략 시 basename이다.
+   */
+  scope?: "basename" | "path-segment";
+  /**
+   * 대소문자를 구분하는지 여부. 생략 시 false다.
+   */
+  caseSensitive?: boolean;
   value: string;
   code: PolicyCheckCode;
 }
@@ -138,6 +186,14 @@ export interface PolicyRuntimeEnvRule {
    */
   attachSeparately: boolean;
   browserObject: string;
+  /**
+   * 등록 화면에서 별도로 첨부하는 파일명.
+   */
+  attachmentFilename?: string;
+  maxBytes?: number;
+  maxKeys?: number;
+  keyPattern?: string;
+  reservedGeneratedFilename?: string;
   forbidBundledSecrets: boolean;
   guideAnchor: string;
 }
@@ -148,6 +204,12 @@ export interface PolicyFramework {
    * 정적 자산의 기대 상대 경로 접두사. 해당 없으면 null.
    */
   expectedAssetPrefix: string | null;
+  /**
+   * 이 프레임워크에서 1차 에이전트가 만들 수 있는 업로드 산출물.
+   *
+   * @minItems 1
+   */
+  artifactKinds?: ["single-html" | "zip", ...("single-html" | "zip")[]];
   guideAnchor: string;
   /**
    * 이 프레임워크에서 추가로 적용하는 checks[].code 참조.
