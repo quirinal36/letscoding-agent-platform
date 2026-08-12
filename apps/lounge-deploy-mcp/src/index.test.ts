@@ -72,10 +72,42 @@ function successHandlers(): LoungeDeployToolHandlers {
     async validate_artifact(input) {
       return {
         policyId: input.policyId,
-        policyVersion: input.policyVersion ?? "2026-08-12.2",
+        policyVersion: input.policyVersion,
+        startingPolicyVersion: input.policyVersion,
+        decision: "PASS",
         pass: true,
         revalidationRequired: false,
-        result: { fileCount: input.manifest.files.length },
+        result: {
+          pass: true,
+          policy: { id: input.policyId, version: input.policyVersion },
+          errors: [],
+          warnings: [],
+          warningWaivers: [],
+          summary: {
+            fileCount: input.manifest.fileCount,
+            totalUncompressedBytes: input.manifest.uncompressedBytes,
+            compressedBytes: input.manifest.compressedBytes ?? null,
+            hashes: {
+              validSha256Count: input.manifest.fileCount,
+              invalidSha256Count: 0,
+              fileSetSha256: input.localValidation.fileSetSha256,
+            },
+          },
+        },
+        metadata: {
+          kind: input.manifest.kind,
+          artifactSha256: input.manifest.artifactSha256,
+          fileSetSha256: input.localValidation.fileSetSha256,
+          fileCount: input.manifest.fileCount,
+          compressedBytes: input.manifest.compressedBytes ?? null,
+          uncompressedBytes: input.manifest.uncompressedBytes,
+        },
+        localValidation: {
+          pass: input.localValidation.pass,
+          policyVersion: input.localValidation.policyVersion,
+          codes: input.localValidation.codes,
+        },
+        requestedWarningWaivers: input.warningWaivers ?? [],
       };
     },
     async create_report(input) {

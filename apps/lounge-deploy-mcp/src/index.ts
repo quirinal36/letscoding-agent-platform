@@ -26,4 +26,8 @@ export {
   type PolicyRepositoryOptions,
 } from "./policy-repository.js";
 export { createBundledPolicySource } from "./bundled-policy-source.js";
+export {
+  createValidateArtifactHandler,
+  type ArtifactValidationHandlerOptions,
+} from "./artifact-validation.js";
 export * from "./schemas.js";

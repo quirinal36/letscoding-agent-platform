@@ -211,6 +211,7 @@ function policyRule(check: PolicyCheck): ArtifactValidationRule {
   return {
     code: check.code,
     severity: check.severity,
+    waivable: check.waivable,
     message:
       checkMessageKo(check.titleKey) ??
       "정책 검사에 대응하는 표시 문구가 없습니다.",

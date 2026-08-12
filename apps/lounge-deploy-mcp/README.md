@@ -28,8 +28,11 @@ envelope를 사용한다. unknown 입력 필드는 handler 실행 전에 거부�
 선택한 immutable JSON/Markdown snapshot을 함께 반환하며, 명시한 과거 버전도 조회할
 수 있다. 응답의 `contentHash`와 `etag`는 정규화한 snapshot 전체를 식별한다. 소스가
 없거나 손상되면 캐시된 정책으로 우회하지 않고 구조화된 domain 오류로 닫힌다.
-나머지 handler는 #10~#12에서 공용 validator/analyzer 패키지에 연결하며, 연결 전에는
-`TOOL_NOT_IMPLEMENTED` domain 오류로 fail-closed한다.
+`validate_artifact`도 #11에서 공용 artifact validator에 연결했다. 로컬 검사 결과와
+manifest의 digest·파일 수·크기 합계를 교차 확인하고, 요청 시작/종료의 활성 정책을
+다시 읽어 같은 버전일 때만 최종 성공한다. 정책이 바뀌면 새 정책으로 manifest를
+판정하되 `REVALIDATION_REQUIRED`를 반환한다. 나머지 handler는 후속 이슈에서
+연결하며, 연결 전에는 `TOOL_NOT_IMPLEMENTED` domain 오류로 fail-closed한다.
 
 정책은 빌드 전에 다음 명령으로 검증해 TypeScript bundle로 생성한다. 생성 파일은
 직접 편집하지 않는다.

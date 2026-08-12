@@ -1,5 +1,7 @@
 import { z } from "zod/v4";
 
+import { ARTIFACT_VALIDATION_RULE_IDS } from "@letscoding/artifact-validator";
+
 const policyIdSchema = z
   .string()
   .min(1)
@@ -10,6 +12,11 @@ const policyVersionSchema = z
   .max(32)
   .regex(/^\d{4}-\d{2}-\d{2}\.[1-9]\d*$/);
 const sha256Schema = z.string().regex(/^[a-f\d]{64}$/i);
+const findingCodeSchema = z
+  .string()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Z][A-Z0-9_]*$/);
 const safePathSchema = z.string().min(1).max(4096);
 
 export const getPolicyInputSchema = z
@@ -43,48 +50,152 @@ export const analyzeProjectInputSchema = z
 export const artifactManifestSchema = z
   .object({
     kind: z.enum(["directory", "zip"]),
-    compressedBytes: z.number().int().nonnegative().optional(),
+    compressedBytes: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(Number.MAX_SAFE_INTEGER)
+      .optional(),
+    uncompressedBytes: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(Number.MAX_SAFE_INTEGER),
+    fileCount: z.number().int().nonnegative().max(2_000),
     files: z
       .array(
         z
           .object({
             path: safePathSchema,
-            sizeBytes: z.number().int().nonnegative(),
+            sizeBytes: z
+              .number()
+              .int()
+              .nonnegative()
+              .max(Number.MAX_SAFE_INTEGER),
             sha256: sha256Schema,
           })
           .strict(),
       )
       .max(2_000),
-    artifactSha256: sha256Schema.optional(),
+    artifactSha256: sha256Schema,
   })
-  .strict();
+  .strict()
+  .superRefine((manifest, context) => {
+    if (manifest.kind === "zip" && manifest.compressedBytes === undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["compressedBytes"],
+        message: "ZIP manifest에는 압축 크기가 필요합니다.",
+      });
+    }
+    if (
+      manifest.kind === "directory" &&
+      manifest.compressedBytes !== undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["compressedBytes"],
+        message: "디렉터리 manifest에는 압축 크기를 넣지 않습니다.",
+      });
+    }
+    if (manifest.fileCount !== manifest.files.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["fileCount"],
+        message: "선언 파일 수와 files 길이가 일치하지 않습니다.",
+      });
+    }
+    const total = manifest.files.reduce(
+      (sum, file) => sum + BigInt(file.sizeBytes),
+      0n,
+    );
+    if (total !== BigInt(manifest.uncompressedBytes)) {
+      context.addIssue({
+        code: "custom",
+        path: ["uncompressedBytes"],
+        message: "선언 해제 크기와 파일 크기 합계가 일치하지 않습니다.",
+      });
+    }
+  });
 
 export const validateArtifactInputSchema = z
   .object({
     policyId: policyIdSchema.default("lounge-deploy"),
-    policyVersion: policyVersionSchema.optional(),
+    policyVersion: policyVersionSchema,
     manifest: artifactManifestSchema,
     localValidation: z
       .object({
         pass: z.boolean(),
         policyVersion: policyVersionSchema,
-        codes: z.array(z.string().min(1).max(128)).max(2_000),
+        artifactSha256: sha256Schema,
+        fileSetSha256: sha256Schema,
+        fileCount: z.number().int().nonnegative().max(2_000),
+        totalUncompressedBytes: z
+          .number()
+          .int()
+          .nonnegative()
+          .max(Number.MAX_SAFE_INTEGER),
+        codes: z.array(findingCodeSchema).max(2_000),
       })
-      .strict()
-      .optional(),
+      .strict(),
     warningWaivers: z
       .array(
         z
           .object({
-            code: z.string().min(1).max(128),
-            reason: z.string().min(1).max(1_000),
+            code: findingCodeSchema,
+            reason: z
+              .string()
+              .trim()
+              .min(1)
+              .max(1_000)
+              .refine(
+                (value) =>
+                  ![...value].some((character) => {
+                    const point = character.codePointAt(0);
+                    return (
+                      point !== undefined && (point <= 0x1f || point === 0x7f)
+                    );
+                  }),
+                "경고 해제 사유에는 제어 문자를 사용할 수 없습니다.",
+              ),
           })
           .strict(),
       )
       .max(100)
       .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((input, context) => {
+    const local = input.localValidation;
+    if (local.policyVersion !== input.policyVersion) {
+      context.addIssue({
+        code: "custom",
+        path: ["localValidation", "policyVersion"],
+        message: "시작 정책과 로컬 검증 정책 버전이 일치하지 않습니다.",
+      });
+    }
+    if (local.artifactSha256 !== input.manifest.artifactSha256) {
+      context.addIssue({
+        code: "custom",
+        path: ["localValidation", "artifactSha256"],
+        message: "로컬 검증과 manifest의 artifact hash가 일치하지 않습니다.",
+      });
+    }
+    if (local.fileCount !== input.manifest.fileCount) {
+      context.addIssue({
+        code: "custom",
+        path: ["localValidation", "fileCount"],
+        message: "로컬 검증과 manifest의 파일 수가 일치하지 않습니다.",
+      });
+    }
+    if (local.totalUncompressedBytes !== input.manifest.uncompressedBytes) {
+      context.addIssue({
+        code: "custom",
+        path: ["localValidation", "totalUncompressedBytes"],
+        message: "로컬 검증과 manifest의 해제 크기가 일치하지 않습니다.",
+      });
+    }
+  });
 
 export const createReportInputSchema = z
   .object({
@@ -167,15 +278,148 @@ export const analyzeProjectDataSchema = z
     result: z.record(z.string(), z.unknown()),
   })
   .strict();
+
+const artifactFindingSchema = z
+  .object({
+    ruleId: z.enum(ARTIFACT_VALIDATION_RULE_IDS),
+    code: findingCodeSchema,
+    severity: z.enum(["error", "warning"]),
+    message: z.string().max(2_000),
+    fileIndexes: z.array(z.number().int().nonnegative()).max(2_000),
+  })
+  .strict();
+
+export const artifactValidationResultSchema = z
+  .object({
+    pass: z.boolean(),
+    policy: z
+      .object({ id: policyIdSchema, version: policyVersionSchema })
+      .strict(),
+    errors: z.array(artifactFindingSchema),
+    warnings: z.array(
+      artifactFindingSchema.extend({
+        severity: z.literal("warning"),
+        waived: z.boolean(),
+        waiverReason: z.string().max(1_000).optional(),
+      }),
+    ),
+    warningWaivers: z.array(
+      z
+        .object({
+          code: findingCodeSchema,
+          reason: z.string().min(1).max(1_000),
+          waivedWarningCount: z.number().int().positive(),
+        })
+        .strict(),
+    ),
+    summary: z
+      .object({
+        fileCount: z.number().int().nonnegative(),
+        totalUncompressedBytes: z.number().int().nonnegative().nullable(),
+        compressedBytes: z.number().int().nonnegative().nullable(),
+        hashes: z
+          .object({
+            validSha256Count: z.number().int().nonnegative(),
+            invalidSha256Count: z.number().int().nonnegative(),
+            fileSetSha256: sha256Schema,
+          })
+          .strict(),
+      })
+      .strict(),
+  })
+  .strict();
+
 export const validateArtifactDataSchema = z
   .object({
     policyId: policyIdSchema,
     policyVersion: policyVersionSchema,
+    startingPolicyVersion: policyVersionSchema,
+    decision: z.enum([
+      "PASS",
+      "VALIDATION_FAILED",
+      "LOCAL_VALIDATION_FAILED",
+      "REVALIDATION_REQUIRED",
+    ]),
     pass: z.boolean(),
     revalidationRequired: z.boolean(),
-    result: z.record(z.string(), z.unknown()),
+    result: artifactValidationResultSchema,
+    metadata: z
+      .object({
+        kind: z.enum(["directory", "zip"]),
+        artifactSha256: sha256Schema,
+        fileSetSha256: sha256Schema,
+        fileCount: z.number().int().nonnegative(),
+        compressedBytes: z.number().int().nonnegative().nullable(),
+        uncompressedBytes: z.number().int().nonnegative(),
+      })
+      .strict(),
+    localValidation: z
+      .object({
+        pass: z.boolean(),
+        policyVersion: policyVersionSchema,
+        codes: z.array(findingCodeSchema).max(2_000),
+      })
+      .strict(),
+    requestedWarningWaivers: z.array(
+      z
+        .object({
+          code: findingCodeSchema,
+          reason: z.string().min(1).max(1_000),
+        })
+        .strict(),
+    ),
   })
-  .strict();
+  .strict()
+  .superRefine((output, context) => {
+    if (output.pass !== (output.decision === "PASS")) {
+      context.addIssue({
+        code: "custom",
+        path: ["pass"],
+        message: "PASS decision과 pass 값이 일치해야 합니다.",
+      });
+    }
+    if (
+      output.revalidationRequired !==
+      (output.decision === "REVALIDATION_REQUIRED")
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["revalidationRequired"],
+        message: "재검증 decision과 플래그가 일치해야 합니다.",
+      });
+    }
+    if (
+      output.result.policy.id !== output.policyId ||
+      output.result.policy.version !== output.policyVersion
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["result", "policy"],
+        message: "응답과 서버 검증 결과의 정책이 일치해야 합니다.",
+      });
+    }
+    if (output.localValidation.policyVersion !== output.startingPolicyVersion) {
+      context.addIssue({
+        code: "custom",
+        path: ["localValidation", "policyVersion"],
+        message: "시작 정책과 로컬 검증 정책이 일치해야 합니다.",
+      });
+    }
+    if (
+      output.metadata.fileSetSha256 !==
+        output.result.summary.hashes.fileSetSha256 ||
+      output.metadata.fileCount !== output.result.summary.fileCount ||
+      output.metadata.uncompressedBytes !==
+        output.result.summary.totalUncompressedBytes ||
+      output.metadata.compressedBytes !== output.result.summary.compressedBytes
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["metadata"],
+        message: "응답 metadata와 서버 검증 요약이 일치해야 합니다.",
+      });
+    }
+  });
 export const createReportDataSchema = z
   .object({
     policyId: policyIdSchema,
