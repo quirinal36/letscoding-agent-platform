@@ -9,6 +9,7 @@ import {
   type PolicySource,
 } from "@letscoding/policy-contract";
 import { createFileSystemPolicySource } from "@letscoding/policy-contract/node";
+import { format } from "prettier";
 
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const repositoryRoot = join(appRoot, "..", "..");
@@ -48,7 +49,11 @@ for (const jsonFile of historyFiles) {
 }
 
 const generated = `/**\n * scripts/generate-policy-bundle.ts가 검증된 policies/ 트리에서 생성했다.\n * 직접 수정하지 않는다.\n */\nexport const POLICY_BUNDLE_FILES: Readonly<Record<string, string>> = ${JSON.stringify(files, null, 2)};\n`;
-await writeFile(outputPath, generated, "utf8");
+await writeFile(
+  outputPath,
+  await format(generated, { parser: "typescript" }),
+  "utf8",
+);
 
 async function requireText(
   selectedSource: PolicySource,
