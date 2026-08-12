@@ -106,6 +106,18 @@ export interface ProjectAnalysisResult {
   };
 }
 
+/**
+ * MCP/client contracts use the same content allowlist and byte limits as the
+ * analyzer. A null result means the path must be metadata-only.
+ */
+export function projectContentByteLimit(path: string): number | null {
+  const normalizedPath = normalizeProjectPath(path);
+  if (normalizedPath === null || isSensitivePath(normalizedPath)) return null;
+  const basename = normalizedPath.split("/").at(-1) ?? "";
+  if (CONTENT_DENY_BASENAMES.has(basename)) return null;
+  return allowedContentBytes(normalizedPath, basename);
+}
+
 interface ValidatedFile extends ProjectFileInput {
   readonly normalizedPath: string;
 }
@@ -252,7 +264,6 @@ function validateInput(
       continue;
     }
     if (file.content !== undefined) {
-      const basename = normalizedPath.split("/").at(-1) ?? "";
       if (isSensitivePath(normalizedPath)) {
         addInputFinding(
           state,
@@ -261,8 +272,8 @@ function validateInput(
         );
         continue;
       }
-      const maxBytes = allowedContentBytes(normalizedPath, basename);
-      if (maxBytes === null || CONTENT_DENY_BASENAMES.has(basename)) {
+      const maxBytes = projectContentByteLimit(normalizedPath);
+      if (maxBytes === null) {
         addInputFinding(
           state,
           "PROJECT_CONTENT_NOT_ALLOWED",

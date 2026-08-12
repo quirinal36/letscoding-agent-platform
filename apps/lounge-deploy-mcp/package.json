@@ -27,6 +27,7 @@
     "@letscoding/audit-log": "workspace:*",
     "@letscoding/mcp-auth": "workspace:*",
     "@letscoding/policy-contract": "workspace:*",
+    "@letscoding/project-analyzer": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^4.4.3"
   },

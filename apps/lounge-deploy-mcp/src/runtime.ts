@@ -5,16 +5,19 @@ import {
   createGetPolicyHandler,
   verifyActivePolicy,
 } from "./policy-repository.js";
+import { createAnalyzeProjectHandler } from "./project-analysis.js";
 
 const policySource = createBundledPolicySource();
+const getPolicy = createGetPolicyHandler({
+  sourceForPolicy: (policyId) =>
+    policyId === "lounge-deploy" ? policySource : null,
+});
 
 export const loungeDeployHttpHandler = createLoungeDeployHttpHandler({
   config: loadMcpConfig(),
   handlers: {
-    get_policy: createGetPolicyHandler({
-      sourceForPolicy: (policyId) =>
-        policyId === "lounge-deploy" ? policySource : null,
-    }),
+    get_policy: getPolicy,
+    analyze_project: createAnalyzeProjectHandler({ getPolicy }),
   },
   readinessProbes: [
     {
