@@ -4,6 +4,12 @@ import type {
   ServerNotification,
   ServerRequest,
 } from "@modelcontextprotocol/sdk/types.js";
+import {
+  writeAuditSafely,
+  type AuditEvent,
+  type AuditSink,
+} from "@letscoding/audit-log";
+import { assertPublicToolAuthorized } from "@letscoding/mcp-auth";
 
 import type { McpServiceConfig } from "./config.js";
 import {
@@ -68,6 +74,11 @@ export interface LoungeDeployToolHandlers {
 export interface CreateMcpServerOptions {
   readonly config: McpServiceConfig;
   readonly handlers?: Partial<LoungeDeployToolHandlers>;
+  readonly requestContext?: {
+    readonly requestId: string;
+    readonly networkKey: string;
+  };
+  readonly auditSink?: AuditSink;
 }
 
 type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
@@ -97,13 +108,7 @@ export function createLoungeDeployMcpServer(
       },
     },
     async (input, extra) =>
-      executeTool(
-        "get_policy",
-        handlers.get_policy,
-        input,
-        extra,
-        options.config,
-      ),
+      executeTool("get_policy", handlers.get_policy, input, extra, options),
   );
   server.registerTool(
     "analyze_project",
@@ -126,7 +131,7 @@ export function createLoungeDeployMcpServer(
         handlers.analyze_project,
         input,
         extra,
-        options.config,
+        options,
       ),
   );
   server.registerTool(
@@ -150,7 +155,7 @@ export function createLoungeDeployMcpServer(
         handlers.validate_artifact,
         input,
         extra,
-        options.config,
+        options,
       ),
   );
   server.registerTool(
@@ -174,7 +179,7 @@ export function createLoungeDeployMcpServer(
         handlers.create_report,
         input,
         extra,
-        options.config,
+        options,
       ),
   );
 
@@ -186,10 +191,13 @@ async function executeTool<Input, Output>(
   handler: (input: Input, context: ToolExecutionContext) => Promise<Output>,
   input: Input,
   extra: Extra,
-  config: McpServiceConfig,
+  options: CreateMcpServerOptions,
 ) {
-  const requestId = String(extra.requestId);
-  const timeoutSignal = AbortSignal.timeout(config.toolTimeoutMs[name]);
+  assertPublicToolAuthorized(name);
+  const startedAt = performance.now();
+  const requestId =
+    options.requestContext?.requestId ?? String(extra.requestId);
+  const timeoutSignal = AbortSignal.timeout(options.config.toolTimeoutMs[name]);
   const signal = AbortSignal.any([extra.signal, timeoutSignal]);
   let envelope: ToolSuccessEnvelope<Output> | ToolErrorEnvelope;
   try {
@@ -198,11 +206,175 @@ async function executeTool<Input, Output>(
   } catch (error) {
     envelope = toToolErrorEnvelope(error, requestId, signal);
   }
+  if (options.auditSink !== undefined) {
+    await writeAuditSafely(
+      options.auditSink,
+      createToolAuditEvent(name, input, envelope, startedAt, options),
+    );
+  }
   return {
     content: [{ type: "text" as const, text: JSON.stringify(envelope) }],
     structuredContent: envelope,
     ...(envelope.ok ? {} : { isError: true }),
   };
+}
+
+function createToolAuditEvent(
+  name: McpToolName,
+  input: unknown,
+  envelope: ToolSuccessEnvelope<unknown> | ToolErrorEnvelope,
+  startedAt: number,
+  options: CreateMcpServerOptions,
+): AuditEvent {
+  const inputRecord = asRecord(input);
+  const data = envelope.ok ? asRecord(envelope.data) : null;
+  const policyId =
+    readString(data, "policyId") ?? readString(inputRecord, "policyId");
+  const policyVersion =
+    readString(data, "policyVersion") ??
+    readString(data, "version") ??
+    readString(inputRecord, "policyVersion") ??
+    readString(inputRecord, "version") ??
+    null;
+  const facts = envelope.ok
+    ? successAuditFacts(name, data ?? {})
+    : {
+        status: "failure" as const,
+        code: envelope.error.code,
+        findingCodes: [] as string[],
+        artifact: undefined,
+      };
+  return {
+    occurredAt: new Date().toISOString(),
+    environment: options.config.environment,
+    revision: options.config.revision,
+    requestId: options.requestContext?.requestId ?? envelope.requestId,
+    networkKey: options.requestContext?.networkKey ?? "0".repeat(24),
+    tool: name,
+    ...(policyId === undefined
+      ? {}
+      : { policy: { id: policyId, version: policyVersion } }),
+    ...(facts.artifact === undefined ? {} : { artifact: facts.artifact }),
+    result: {
+      status: facts.status,
+      code: facts.code,
+      findingCodes: facts.findingCodes,
+    },
+    latencyMs: performance.now() - startedAt,
+  };
+}
+
+function successAuditFacts(name: McpToolName, data: Record<string, unknown>) {
+  if (name === "get_policy") {
+    return {
+      status: "success" as const,
+      code: "PASS",
+      findingCodes: [] as string[],
+      artifact: undefined,
+    };
+  }
+  if (name === "analyze_project") {
+    const result = asRecord(data.result);
+    const pass = result.pass === true;
+    return {
+      status: pass ? ("success" as const) : ("failure" as const),
+      code: pass ? "PASS" : "ANALYSIS_FAILED",
+      findingCodes: readCodes(result.findings),
+      artifact: undefined,
+    };
+  }
+  const reportJson = asRecord(data.json);
+  const validation =
+    name === "create_report"
+      ? asRecord(reportJson.validation)
+      : asRecord(data.result);
+  const metadata =
+    name === "create_report"
+      ? asRecord(reportJson.artifact)
+      : asRecord(data.metadata);
+  const pass = data.pass === true;
+  const code =
+    name === "create_report"
+      ? reportStatusCode(readString(data, "status"))
+      : (readString(data, "decision") ?? "UNCLASSIFIED");
+  return {
+    status: pass ? ("success" as const) : ("failure" as const),
+    code,
+    findingCodes:
+      name === "create_report"
+        ? readStringArray(validation.errorCodes)
+        : [...readCodes(validation.errors), ...readCodes(validation.warnings)],
+    artifact: readArtifact(metadata),
+  };
+}
+
+function reportStatusCode(status: string | undefined): string {
+  return (
+    {
+      completed: "PASS",
+      failed: "REPORT_FAILED",
+      "revalidation-required": "REVALIDATION_REQUIRED",
+    }[status ?? ""] ?? "UNCLASSIFIED"
+  );
+}
+
+function readArtifact(
+  value: Record<string, unknown>,
+): AuditEvent["artifact"] | undefined {
+  const artifactSha256 = readString(value, "artifactSha256");
+  const uncompressedBytes = readNumber(value, "uncompressedBytes");
+  const fileCount = readNumber(value, "fileCount");
+  if (
+    artifactSha256 === undefined ||
+    uncompressedBytes === undefined ||
+    fileCount === undefined
+  ) {
+    return undefined;
+  }
+  return {
+    compressedBytes: readNumber(value, "compressedBytes") ?? null,
+    uncompressedBytes,
+    fileCount,
+    artifactSha256,
+  };
+}
+
+function readCodes(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    const code = readString(asRecord(entry), "code");
+    return code === undefined ? [] : [code];
+  });
+}
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : [];
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function readString(
+  value: Record<string, unknown> | null,
+  key: string,
+): string | undefined {
+  const selected = value?.[key];
+  return typeof selected === "string" ? selected : undefined;
+}
+
+function readNumber(
+  value: Record<string, unknown>,
+  key: string,
+): number | undefined {
+  const selected = value[key];
+  return typeof selected === "number" && Number.isSafeInteger(selected)
+    ? selected
+    : undefined;
 }
 
 async function raceAbort<T>(

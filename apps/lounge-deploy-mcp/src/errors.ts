@@ -47,15 +47,16 @@ export function toToolErrorEnvelope(
   signal: AbortSignal,
 ): ToolErrorEnvelope {
   if (error instanceof McpDomainError) {
+    const details = sanitizeDomainDetails(error.details);
     return {
       ok: false,
       requestId,
       error: {
         kind: "domain",
-        code: error.code,
-        message: error.message,
+        code: safeDomainCode(error.code),
+        message: safeDomainMessage(error.message),
         retryable: error.retryable,
-        ...(error.details === undefined ? {} : { details: error.details }),
+        ...(details === undefined ? {} : { details }),
       },
     };
   }
@@ -87,3 +88,35 @@ export function toToolErrorEnvelope(
     },
   };
 }
+
+function safeDomainCode(value: string): string {
+  return /^[A-Z][A-Z0-9_]{0,127}$/.test(value) ? value : "DOMAIN_ERROR";
+}
+
+function safeDomainMessage(value: string): string {
+  const hasControl = [...value].some((character) => {
+    const point = character.codePointAt(0);
+    return point !== undefined && (point <= 0x1f || point === 0x7f);
+  });
+  return value.length > 0 &&
+    value.length <= 2_000 &&
+    !hasControl &&
+    !looksSensitive(value)
+    ? value
+    : "요청을 안전하게 완료하지 못했습니다.";
+}
+
+function sanitizeDomainDetails(
+  details: Readonly<Record<string, unknown>> | undefined,
+): Readonly<Record<string, unknown>> | undefined {
+  const policyCodes = details?.policyCodes;
+  if (!Array.isArray(policyCodes)) return undefined;
+  const codes = policyCodes.filter(
+    (value): value is string =>
+      typeof value === "string" && /^[A-Z][A-Z0-9_]{0,127}$/.test(value),
+  );
+  return codes.length === 0
+    ? undefined
+    : { policyCodes: [...new Set(codes)].sort() };
+}
+import { looksSensitive } from "./sensitive-data.js";

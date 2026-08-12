@@ -7,6 +7,12 @@ export interface McpServiceConfig {
   readonly revision: string;
   readonly port: number;
   readonly maxBodyBytes: number;
+  readonly networkFingerprintSecret: string;
+  readonly rateLimit: {
+    readonly maxRequests: number;
+    readonly windowMs: number;
+    readonly maxConcurrentRequests: number;
+  };
   readonly toolTimeoutMs: Readonly<
     Record<
       "get_policy" | "analyze_project" | "validate_artifact" | "create_report",
@@ -36,6 +42,10 @@ export function loadMcpConfig(
   const timeout = positiveIntegerText
     .max(30_000)
     .parse(environment.LETS_TOOL_TIMEOUT_MS ?? "5000");
+  const localNetworkSecret =
+    selected === "dev" || selected === "test"
+      ? "local-network-key-secret-not-for-production"
+      : undefined;
   return {
     environment: selected,
     revision,
@@ -43,6 +53,22 @@ export function loadMcpConfig(
     maxBodyBytes: positiveIntegerText
       .max(4 * 1024 * 1024)
       .parse(environment.LETS_MAX_BODY_BYTES ?? String(1024 * 1024)),
+    networkFingerprintSecret: z
+      .string()
+      .min(32)
+      .max(256)
+      .parse(environment.LETS_NETWORK_KEY_SECRET ?? localNetworkSecret),
+    rateLimit: {
+      maxRequests: positiveIntegerText
+        .max(10_000)
+        .parse(environment.LETS_RATE_LIMIT_MAX_REQUESTS ?? "120"),
+      windowMs: positiveIntegerText
+        .max(60 * 60 * 1_000)
+        .parse(environment.LETS_RATE_LIMIT_WINDOW_MS ?? "60000"),
+      maxConcurrentRequests: positiveIntegerText
+        .max(64)
+        .parse(environment.LETS_MAX_CONCURRENT_REQUESTS ?? "8"),
+    },
     toolTimeoutMs: {
       get_policy: timeout,
       analyze_project: timeout,

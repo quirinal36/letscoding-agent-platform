@@ -8,6 +8,18 @@ import {
 
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import {
+  createJsonLineAuditSink,
+  writeAuditSafely,
+  type AuditSink,
+} from "@letscoding/audit-log";
+import {
+  AnonymousAccessError,
+  authorizeAnonymousRequest,
+  ConcurrencyGate,
+  createRotatingNetworkKey,
+  FixedWindowRateLimiter,
+} from "@letscoding/mcp-auth";
 
 import type { McpServiceConfig } from "./config.js";
 import {
@@ -24,6 +36,7 @@ export interface CreateHttpHandlerOptions {
   readonly config: McpServiceConfig;
   readonly handlers?: Partial<LoungeDeployToolHandlers>;
   readonly readinessProbes?: readonly ReadinessProbe[];
+  readonly auditSink?: AuditSink;
 }
 
 export type LoungeDeployHttpHandler = (
@@ -34,9 +47,20 @@ export type LoungeDeployHttpHandler = (
 export function createLoungeDeployHttpHandler(
   options: CreateHttpHandlerOptions,
 ): LoungeDeployHttpHandler {
+  const rateLimiter = new FixedWindowRateLimiter({
+    limit: options.config.rateLimit.maxRequests,
+    windowMs: options.config.rateLimit.windowMs,
+  });
+  const concurrency = new ConcurrencyGate(
+    options.config.rateLimit.maxConcurrentRequests,
+  );
+  const auditSink =
+    options.auditSink ??
+    (options.config.environment === "test"
+      ? { write() {} }
+      : createJsonLineAuditSink());
   return async (request, response): Promise<void> => {
-    const requestId =
-      request.headers["x-request-id"]?.toString() ?? randomUUID();
+    const requestId = selectRequestId(request.headers["x-request-id"]);
     response.setHeader("x-request-id", requestId);
     response.setHeader("cache-control", "no-store");
     const path = new URL(request.url ?? "/", "http://localhost").pathname;
@@ -77,45 +101,162 @@ export function createLoungeDeployHttpHandler(
       return;
     }
 
-    let body: unknown;
+    const networkKey = createRotatingNetworkKey({
+      networkSignal: selectNetworkSignal(request, options.config.environment),
+      secret: options.config.networkFingerprintSecret,
+    });
     try {
-      body = await readJsonBody(request, options.config.maxBodyBytes);
+      authorizeAnonymousRequest(request.headers);
     } catch (error) {
-      const tooLarge =
-        error instanceof BodyReadError && error.code === "HTTP_BODY_TOO_LARGE";
-      writeJson(response, tooLarge ? 413 : 400, {
+      const code =
+        error instanceof AnonymousAccessError
+          ? error.code
+          : "ACCESS_BOUNDARY_FAILED";
+      await auditRequestRejection(
+        auditSink,
+        options,
+        requestId,
+        networkKey,
+        "rejected",
+        code,
+      );
+      writeJson(response, code === "AUTHENTICATION_NOT_SUPPORTED" ? 401 : 400, {
         jsonrpc: "2.0",
-        error: {
-          code: tooLarge ? -32001 : -32700,
-          message: tooLarge ? "Request body too large." : "Invalid JSON body.",
-        },
+        error: { code: -32002, message: "Anonymous MCP access required." },
+        id: null,
+      });
+      return;
+    }
+    const rate = rateLimiter.consume(networkKey);
+    response.setHeader("x-ratelimit-remaining", String(rate.remaining));
+    if (!rate.allowed) {
+      response.setHeader("retry-after", String(rate.retryAfterSeconds));
+      await auditRequestRejection(
+        auditSink,
+        options,
+        requestId,
+        networkKey,
+        "rate-limited",
+        "RATE_LIMITED",
+      );
+      writeJson(response, 429, {
+        jsonrpc: "2.0",
+        error: { code: -32029, message: "Request rate limit exceeded." },
+        id: null,
+      });
+      return;
+    }
+    const release = concurrency.tryAcquire();
+    if (release === null) {
+      response.setHeader("retry-after", "1");
+      await auditRequestRejection(
+        auditSink,
+        options,
+        requestId,
+        networkKey,
+        "overloaded",
+        "CONCURRENCY_LIMITED",
+      );
+      writeJson(response, 503, {
+        jsonrpc: "2.0",
+        error: { code: -32030, message: "Service is temporarily busy." },
         id: null,
       });
       return;
     }
 
-    const server = createLoungeDeployMcpServer(options);
-    const transport = new StreamableHTTPServerTransport({
-      enableJsonResponse: true,
-    });
     try {
-      // SDK 1.30's Node wrapper and Transport interface differ only in how
-      // exactOptionalPropertyTypes represents optional callbacks.
-      await server.connect(transport as Transport);
-      await transport.handleRequest(request, response, body);
-    } catch {
-      if (!response.headersSent) {
-        writeJson(response, 500, {
+      let body: unknown;
+      try {
+        body = await readJsonBody(request, options.config.maxBodyBytes);
+      } catch (error) {
+        const tooLarge =
+          error instanceof BodyReadError &&
+          error.code === "HTTP_BODY_TOO_LARGE";
+        writeJson(response, tooLarge ? 413 : 400, {
           jsonrpc: "2.0",
-          error: { code: -32603, message: "Internal server error." },
+          error: {
+            code: tooLarge ? -32001 : -32700,
+            message: tooLarge
+              ? "Request body too large."
+              : "Invalid JSON body.",
+          },
           id: null,
         });
+        return;
+      }
+
+      const server = createLoungeDeployMcpServer({
+        ...options,
+        requestContext: { requestId, networkKey },
+        auditSink,
+      });
+      const transport = new StreamableHTTPServerTransport({
+        enableJsonResponse: true,
+      });
+      try {
+        // SDK 1.30's Node wrapper and Transport interface differ only in how
+        // exactOptionalPropertyTypes represents optional callbacks.
+        await server.connect(transport as Transport);
+        await transport.handleRequest(request, response, body);
+      } catch {
+        if (!response.headersSent) {
+          writeJson(response, 500, {
+            jsonrpc: "2.0",
+            error: { code: -32603, message: "Internal server error." },
+            id: null,
+          });
+        }
+      } finally {
+        await transport.close();
+        await server.close();
       }
     } finally {
-      await transport.close();
-      await server.close();
+      release();
     }
   };
+}
+
+async function auditRequestRejection(
+  sink: AuditSink,
+  options: CreateHttpHandlerOptions,
+  requestId: string,
+  networkKey: string,
+  status: "rejected" | "rate-limited" | "overloaded",
+  code: string,
+): Promise<void> {
+  await writeAuditSafely(sink, {
+    occurredAt: new Date().toISOString(),
+    environment: options.config.environment,
+    revision: options.config.revision,
+    requestId,
+    networkKey,
+    tool: null,
+    result: { status, code },
+    latencyMs: 0,
+  });
+}
+
+function selectRequestId(
+  value: string | readonly string[] | undefined,
+): string {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return typeof candidate === "string" &&
+    /^[A-Za-z0-9._:-]{1,128}$/.test(candidate)
+    ? candidate
+    : randomUUID();
+}
+
+function selectNetworkSignal(
+  request: IncomingMessage,
+  environment: McpServiceConfig["environment"],
+): string {
+  if (environment === "staging" || environment === "prod") {
+    const forwarded = request.headers["x-vercel-forwarded-for"];
+    const value = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+    if (value !== undefined && value.length > 0) return value;
+  }
+  return request.socket.remoteAddress ?? "unknown-network";
 }
 
 export function createNodeHttpServer(handler: LoungeDeployHttpHandler): Server {
