@@ -1,0 +1,8 @@
+coverage
+dist
+node_modules
+pnpm-lock.yaml
+
+# Existing planning and approved ADR records predate formatter adoption.
+24-letscoding-agent-platform-plan.md
+docs/adr
