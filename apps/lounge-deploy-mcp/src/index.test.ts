@@ -54,7 +54,10 @@ function successHandlers(): LoungeDeployToolHandlers {
         policyId: input.policyId,
         version: input.version ?? "2026-08-12.2",
         effectiveAt: "2026-08-12T14:08:37Z",
+        resolvedAt: "2026-08-13T00:00:00Z",
+        active: input.version === undefined,
         contentHash: "a".repeat(64),
+        etag: `"sha256-${"a".repeat(64)}"`,
         policy: { schemaVersion: 1 },
         guide: "# Test guide",
       };
