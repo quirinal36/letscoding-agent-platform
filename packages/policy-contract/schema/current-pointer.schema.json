@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.letscoding.kr/agent-platform/current-pointer.schema.json",
+  "title": "CurrentPointer",
+  "description": "활성 정책 스냅샷을 가리키는 포인터. 정책 규칙 값을 복제하지 않고, 스냅샷 경로는 history/<version>.json 규약으로 파생한다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policyId", "version", "activatedAt"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "policyId": {
+      "$ref": "https://schemas.letscoding.kr/agent-platform/shared/policy-id.schema.json"
+    },
+    "version": {
+      "$ref": "https://schemas.letscoding.kr/agent-platform/shared/policy-version.schema.json"
+    },
+    "activatedAt": {
+      "description": "이 버전을 활성화한 시각(UTC).",
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

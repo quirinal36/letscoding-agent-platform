@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "id": "lounge-deploy",
+  "version": "2026-08-12.1",
+  "effectiveAt": "2026-08-12T00:00:00Z",
+  "changeReason": "정책 계약 도입에 따른 최초 스냅샷 발행.",
+  "zip": {
+    "maxCompressedBytes": 31457280,
+    "maxUncompressedBytes": 104857600,
+    "maxFiles": 500,
+    "requireRootIndexHtml": true,
+    "codes": {
+      "compressedTooLarge": "LD_ZIP_COMPRESSED_TOO_LARGE",
+      "uncompressedTooLarge": "LD_ZIP_UNCOMPRESSED_TOO_LARGE",
+      "tooManyFiles": "LD_ZIP_TOO_MANY_FILES",
+      "missingRootIndexHtml": "LD_ZIP_MISSING_ROOT_INDEX_HTML"
+    }
+  },
+  "files": {
+    "codes": {
+      "extensionNotAllowed": "LD_FILE_EXTENSION_NOT_ALLOWED"
+    },
+    "allowedExtensions": [
+      ".html",
+      ".htm",
+      ".css",
+      ".js",
+      ".mjs",
+      ".json",
+      ".map",
+      ".txt",
+      ".svg",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".webp",
+      ".avif",
+      ".ico",
+      ".woff",
+      ".woff2",
+      ".ttf",
+      ".otf",
+      ".mp3",
+      ".mp4",
+      ".webm",
+      ".wasm"
+    ],
+    "blockedFilenames": [
+      { "match": "exact", "value": ".env", "code": "LD_FILE_ENV_INCLUDED" },
+      { "match": "prefix", "value": ".env.", "code": "LD_FILE_ENV_INCLUDED" },
+      {
+        "match": "exact",
+        "value": "runtime-config.js",
+        "code": "LD_FILE_RUNTIME_CONFIG_INCLUDED"
+      }
+    ],
+    "blockedPathRules": [
+      { "kind": "absolute-path", "code": "LD_PATH_ABSOLUTE" },
+      { "kind": "parent-traversal", "code": "LD_PATH_PARENT_TRAVERSAL" },
+      { "kind": "backslash-separator", "code": "LD_PATH_BACKSLASH" },
+      { "kind": "control-character", "code": "LD_PATH_CONTROL_CHARACTER" },
+      { "kind": "url-reinterpret", "code": "LD_PATH_URL_REINTERPRET" },
+      { "kind": "non-normalized", "code": "LD_PATH_NOT_NORMALIZED" }
+    ]
+  },
+  "assetPaths": {
+    "disallowRootAbsolute": {
+      "enabled": true,
+      "code": "LD_ASSET_ROOT_ABSOLUTE"
+    }
+  },
+  "runtimeEnv": {
+    "attachSeparately": true,
+    "browserObject": "window.__LETS_RUNTIME_ENV__",
+    "forbidBundledSecrets": true,
+    "guideAnchor": "runtime-env"
+  },
+  "frameworks": [
+    {
+      "key": "nextjs",
+      "detect": {
+        "configFiles": ["next.config.js", "next.config.mjs", "next.config.ts"],
+        "dependencies": ["next"]
+      },
+      "expectedAssetPrefix": "./_next/",
+      "guideAnchor": "nextjs",
+      "checks": ["LD_NEXT_ASSET_PREFIX_UNEXPECTED"]
+    },
+    {
+      "key": "vite",
+      "detect": {
+        "configFiles": ["vite.config.js", "vite.config.mjs", "vite.config.ts"],
+        "dependencies": ["vite"]
+      },
+      "expectedAssetPrefix": "./assets/",
+      "guideAnchor": "vite",
+      "checks": ["LD_VITE_ASSET_PREFIX_UNEXPECTED"]
+    },
+    {
+      "key": "plain-html",
+      "detect": {
+        "configFiles": [],
+        "dependencies": []
+      },
+      "expectedAssetPrefix": null,
+      "guideAnchor": "plain-html",
+      "checks": []
+    }
+  ],
+  "checks": [
+    {
+      "code": "LD_ZIP_COMPRESSED_TOO_LARGE",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.compressedTooLarge",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_UNCOMPRESSED_TOO_LARGE",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.uncompressedTooLarge",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_TOO_MANY_FILES",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.tooManyFiles",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_MISSING_ROOT_INDEX_HTML",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.missingRootIndexHtml",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_FILE_EXTENSION_NOT_ALLOWED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "file.extensionNotAllowed",
+      "guideAnchor": "allowed-extensions"
+    },
+    {
+      "code": "LD_FILE_ENV_INCLUDED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "file.envIncluded",
+      "guideAnchor": "blocked-files"
+    },
+    {
+      "code": "LD_FILE_RUNTIME_CONFIG_INCLUDED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "file.runtimeConfigIncluded",
+      "guideAnchor": "blocked-files"
+    },
+    {
+      "code": "LD_PATH_ABSOLUTE",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.absolute",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_PARENT_TRAVERSAL",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.parentTraversal",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_BACKSLASH",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.backslash",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_CONTROL_CHARACTER",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.controlCharacter",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_URL_REINTERPRET",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.urlReinterpret",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_NOT_NORMALIZED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.notNormalized",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_ASSET_ROOT_ABSOLUTE",
+      "severity": "warning",
+      "waivable": true,
+      "appliesTo": "output-dir",
+      "titleKey": "asset.rootAbsolute",
+      "guideAnchor": "asset-paths"
+    },
+    {
+      "code": "LD_NEXT_ASSET_PREFIX_UNEXPECTED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "output-dir",
+      "titleKey": "framework.nextAssetPrefix",
+      "guideAnchor": "nextjs"
+    },
+    {
+      "code": "LD_VITE_ASSET_PREFIX_UNEXPECTED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "output-dir",
+      "titleKey": "framework.viteAssetPrefix",
+      "guideAnchor": "vite"
+    }
+  ],
+  "guide": {
+    "path": "history/2026-08-12.1.md",
+    "sha256": "7cc01d2cab1dabf1317642ea8e90b91b34e83137714170d65e3d619ba8149d98"
+  }
+}

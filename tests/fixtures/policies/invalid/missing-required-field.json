@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "id": "lounge-deploy",
+  "version": "2026-01-02.1",
+  "effectiveAt": "2026-01-02T00:00:00Z",
+  "zip": {
+    "maxCompressedBytes": 1048576,
+    "maxUncompressedBytes": 4194304,
+    "maxFiles": 10,
+    "requireRootIndexHtml": true,
+    "codes": {
+      "compressedTooLarge": "LD_ZIP_COMPRESSED_TOO_LARGE",
+      "uncompressedTooLarge": "LD_ZIP_UNCOMPRESSED_TOO_LARGE",
+      "tooManyFiles": "LD_ZIP_TOO_MANY_FILES",
+      "missingRootIndexHtml": "LD_ZIP_MISSING_ROOT_INDEX_HTML"
+    }
+  },
+  "files": {
+    "codes": {
+      "extensionNotAllowed": "LD_FILE_EXTENSION_NOT_ALLOWED"
+    },
+    "allowedExtensions": [
+      ".html",
+      ".css",
+      ".js"
+    ],
+    "blockedFilenames": [
+      {
+        "match": "exact",
+        "value": ".env",
+        "code": "LD_FILE_ENV_INCLUDED"
+      }
+    ],
+    "blockedPathRules": [
+      {
+        "kind": "backslash-separator",
+        "code": "LD_PATH_BACKSLASH"
+      }
+    ]
+  },
+  "assetPaths": {
+    "disallowRootAbsolute": {
+      "enabled": true,
+      "code": "LD_ASSET_ROOT_ABSOLUTE"
+    }
+  },
+  "runtimeEnv": {
+    "attachSeparately": true,
+    "browserObject": "window.__LETS_RUNTIME_ENV__",
+    "forbidBundledSecrets": true,
+    "guideAnchor": "runtime-env"
+  },
+  "frameworks": [
+    {
+      "key": "plain-html",
+      "detect": {
+        "configFiles": [],
+        "dependencies": []
+      },
+      "expectedAssetPrefix": null,
+      "guideAnchor": "plain-html",
+      "checks": []
+    }
+  ],
+  "checks": [
+    {
+      "code": "LD_ZIP_COMPRESSED_TOO_LARGE",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.compressedTooLarge",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_UNCOMPRESSED_TOO_LARGE",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.uncompressedTooLarge",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_TOO_MANY_FILES",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.tooManyFiles",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_MISSING_ROOT_INDEX_HTML",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.missingRootIndexHtml",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_FILE_EXTENSION_NOT_ALLOWED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "file.extensionNotAllowed",
+      "guideAnchor": "allowed-extensions"
+    },
+    {
+      "code": "LD_FILE_ENV_INCLUDED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "file.envIncluded",
+      "guideAnchor": "blocked-files"
+    },
+    {
+      "code": "LD_PATH_BACKSLASH",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.backslash",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_ASSET_ROOT_ABSOLUTE",
+      "severity": "warning",
+      "waivable": true,
+      "appliesTo": "output-dir",
+      "titleKey": "asset.rootAbsolute",
+      "guideAnchor": "asset-paths"
+    }
+  ],
+  "guide": {
+    "path": "history/2026-01-02.1.md",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}

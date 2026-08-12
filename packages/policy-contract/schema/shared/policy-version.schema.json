@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.letscoding.kr/agent-platform/shared/policy-version.schema.json",
+  "title": "PolicyVersion",
+  "description": "발행일과 그날의 발행 순번으로 이루어진 불변 버전. 예: 2026-08-12.3. 이 pattern은 달력에 존재하지 않는 날짜를 거르지 못하므로 파서가 추가로 검사한다.",
+  "type": "string",
+  "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\\.([1-9][0-9]*)$"
+}

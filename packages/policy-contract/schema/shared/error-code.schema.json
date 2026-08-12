@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.letscoding.kr/agent-platform/shared/error-code.schema.json",
+  "title": "PolicyCheckCode",
+  "description": "사용자 작품 판정에 사용하는 안정적 오류 코드. 한번 발행한 코드는 재사용·개명·의미 변경을 하지 않는다.",
+  "type": "string",
+  "pattern": "^LD_[A-Z0-9]+(_[A-Z0-9]+)*$",
+  "maxLength": 48
+}
