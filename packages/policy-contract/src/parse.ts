@@ -105,27 +105,17 @@ function collectReferencedCodes(
 ): { path: string; code: string }[] {
   const referenced: { path: string; code: string }[] = [
     {
-      path: "/zip/codes/compressedTooLarge",
-      code: document.zip.codes.compressedTooLarge,
-    },
-    {
-      path: "/zip/codes/uncompressedTooLarge",
-      code: document.zip.codes.uncompressedTooLarge,
-    },
-    { path: "/zip/codes/tooManyFiles", code: document.zip.codes.tooManyFiles },
-    {
-      path: "/zip/codes/missingRootIndexHtml",
-      code: document.zip.codes.missingRootIndexHtml,
-    },
-    {
       path: "/assetPaths/disallowRootAbsolute/code",
       code: document.assetPaths.disallowRootAbsolute.code,
     },
-    {
-      path: "/files/codes/extensionNotAllowed",
-      code: document.files.codes.extensionNotAllowed,
-    },
   ];
+
+  for (const [name, code] of Object.entries(document.zip.codes)) {
+    referenced.push({ path: `/zip/codes/${name}`, code });
+  }
+  for (const [name, code] of Object.entries(document.files.codes)) {
+    referenced.push({ path: `/files/codes/${name}`, code });
+  }
 
   document.files.blockedFilenames.forEach((entry, index) => {
     referenced.push({

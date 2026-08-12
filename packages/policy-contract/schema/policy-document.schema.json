@@ -41,6 +41,54 @@
       "minLength": 1,
       "maxLength": 500
     },
+    "governance": {
+      "title": "PolicyGovernance",
+      "description": "정책 발행의 책임자와 승인 기록.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "approver", "publishedAt"],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "pattern": "^@[A-Za-z0-9][A-Za-z0-9-]{0,38}$"
+        },
+        "approver": {
+          "type": "string",
+          "pattern": "^@[A-Za-z0-9][A-Za-z0-9-]{0,38}$"
+        },
+        "publishedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "source": {
+      "title": "PolicySourceProvenance",
+      "description": "정책을 이관한 원본 저장소, 기준 commit과 파일별 digest.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "synchronizedAt", "files"],
+      "properties": {
+        "repository": { "type": "string", "format": "uri" },
+        "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "synchronizedAt": { "type": "string", "format": "date-time" },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "title": "PolicySourceFile",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "sha256"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
     "zip": {
       "title": "PolicyZipLimits",
       "description": "제출 ZIP의 크기와 구조 제한.",
@@ -56,11 +104,20 @@
       "properties": {
         "maxCompressedBytes": { "type": "integer", "minimum": 1 },
         "maxUncompressedBytes": { "type": "integer", "minimum": 1 },
+        "maxEntries": { "type": "integer", "minimum": 1 },
         "maxFiles": { "type": "integer", "minimum": 1 },
+        "maxPathLength": { "type": "integer", "minimum": 1 },
+        "requireForwardSlashes": { "type": "boolean" },
         "requireRootIndexHtml": {
           "description": "ZIP 최상위에 index.html이 있어야 하는지 여부.",
           "type": "boolean"
         },
+        "allowSingleWrapperDirectory": {
+          "description": "단일 wrapper 폴더를 제거한 뒤의 루트를 허용하는지 여부.",
+          "type": "boolean"
+        },
+        "allowZip64": { "type": "boolean" },
+        "allowMultiDisk": { "type": "boolean" },
         "codes": {
           "title": "PolicyZipCodes",
           "type": "object",
@@ -82,6 +139,21 @@
               "$ref": "https://schemas.letscoding.kr/agent-platform/shared/error-code.schema.json"
             },
             "missingRootIndexHtml": {
+              "$ref": "https://schemas.letscoding.kr/agent-platform/shared/error-code.schema.json"
+            },
+            "invalidFormat": {
+              "$ref": "https://schemas.letscoding.kr/agent-platform/shared/error-code.schema.json"
+            },
+            "tooManyEntries": {
+              "$ref": "https://schemas.letscoding.kr/agent-platform/shared/error-code.schema.json"
+            },
+            "pathTooLong": {
+              "$ref": "https://schemas.letscoding.kr/agent-platform/shared/error-code.schema.json"
+            },
+            "mixedWrapperRoots": {
+              "$ref": "https://schemas.letscoding.kr/agent-platform/shared/error-code.schema.json"
+            },
+            "invalidEntrySize": {
               "$ref": "https://schemas.letscoding.kr/agent-platform/shared/error-code.schema.json"
             }
           }
@@ -135,6 +207,14 @@
               "match": {
                 "description": "value를 파일명과 비교하는 방식.",
                 "enum": ["exact", "prefix", "suffix"]
+              },
+              "scope": {
+                "description": "basename만 비교할지 경로의 모든 세그먼트를 비교할지 지정한다. 생략 시 basename이다.",
+                "enum": ["basename", "path-segment"]
+              },
+              "caseSensitive": {
+                "description": "대소문자를 구분하는지 여부. 생략 시 false다.",
+                "type": "boolean"
               },
               "value": { "type": "string", "minLength": 1 },
               "code": {
@@ -214,6 +294,18 @@
           "type": "string",
           "pattern": "^window\\.[A-Za-z_$][A-Za-z0-9_$]*$"
         },
+        "attachmentFilename": {
+          "description": "등록 화면에서 별도로 첨부하는 파일명.",
+          "type": "string",
+          "minLength": 1
+        },
+        "maxBytes": { "type": "integer", "minimum": 1 },
+        "maxKeys": { "type": "integer", "minimum": 1 },
+        "keyPattern": { "type": "string", "minLength": 1 },
+        "reservedGeneratedFilename": {
+          "type": "string",
+          "minLength": 1
+        },
         "forbidBundledSecrets": { "type": "boolean" },
         "guideAnchor": {
           "type": "string",
@@ -261,6 +353,13 @@
             "description": "정적 자산의 기대 상대 경로 접두사. 해당 없으면 null.",
             "type": ["string", "null"],
             "pattern": "^\\./"
+          },
+          "artifactKinds": {
+            "description": "이 프레임워크에서 1차 에이전트가 만들 수 있는 업로드 산출물.",
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "enum": ["single-html", "zip"] }
           },
           "guideAnchor": {
             "type": "string",

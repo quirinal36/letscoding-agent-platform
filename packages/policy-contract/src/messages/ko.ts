@@ -44,6 +44,11 @@ export const checkMessagesKo: Record<string, string> = {
     "압축을 풀었을 때 크기가 허용된 최대 크기를 넘었습니다.",
   "zip.tooManyFiles": "ZIP 안의 파일 수가 허용된 개수를 넘었습니다.",
   "zip.missingRootIndexHtml": "ZIP 최상위에 index.html이 없습니다.",
+  "zip.invalidFormat": "올바른 단일 디스크 ZIP 파일이 아닙니다.",
+  "zip.tooManyEntries": "ZIP 안의 전체 항목 수가 허용된 개수를 넘었습니다.",
+  "zip.wrapperMixedRoots":
+    "단일 최상위 wrapper 폴더 밖에 다른 파일을 둘 수 없습니다.",
+  "entry.sizeInvalid": "ZIP 항목의 압축 해제 크기 정보가 올바르지 않습니다.",
   "file.extensionNotAllowed": "허용되지 않은 확장자의 파일이 있습니다.",
   "file.envIncluded": ".env 파일은 ZIP에 넣지 않고 별도로 첨부해야 합니다.",
   "file.runtimeConfigIncluded": "runtime-config.js는 ZIP에 포함할 수 없습니다.",
@@ -55,10 +60,17 @@ export const checkMessagesKo: Record<string, string> = {
   "path.urlReinterpret":
     "URL로 재해석될 수 있는 문자가 포함된 경로가 있습니다.",
   "path.notNormalized": "정규화되지 않은 경로가 있습니다.",
+  "path.tooLong": "ZIP 내부 파일 경로가 허용된 길이를 넘었습니다.",
+  "output.sourceTreeIncluded":
+    "빌드 결과물이 아니라 프로젝트 소스 트리가 포함되어 있습니다.",
   "asset.rootAbsolute":
     "루트 절대 경로로 참조하는 정적 자산이 있습니다. 라운지 하위 경로에서 깨질 수 있습니다.",
+  "asset.externalOriginReview":
+    "외부 API 또는 CDN origin이 라운지의 CSP와 CORS에서 허용되는지 확인해야 합니다.",
   "framework.nextAssetPrefix":
     "Next.js 정적 export의 자산 경로가 ./_next/ 형태가 아닙니다.",
+  "framework.nextServerRuntime":
+    "Next.js 프로젝트가 정적 export로 바꿀 수 없는 서버 런타임 기능을 사용합니다.",
   "framework.viteAssetPrefix":
     "Vite 빌드의 자산 경로가 ./assets/ 형태가 아닙니다.",
 };
