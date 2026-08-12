@@ -4,3 +4,6 @@
 # endOfLine "lf" 검사가 모든 파일을 위반으로 잡고, 발행된 정책 가이드의
 # sha256 검증도 플랫폼마다 다른 결과를 낸다.
 * text=auto eol=lf
+
+# 플러그인 빌드가 재생성하는 번들 검증기와 제3자 런타임.
+plugins/lounge-deploy/runtime/** linguist-generated=true

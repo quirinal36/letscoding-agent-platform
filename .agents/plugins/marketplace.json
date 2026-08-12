@@ -1,0 +1,20 @@
+{
+  "name": "letscoding-agent-platform",
+  "interface": {
+    "displayName": "Let's Coding Agent Platform"
+  },
+  "plugins": [
+    {
+      "name": "lounge-deploy",
+      "source": {
+        "source": "local",
+        "path": "./plugins/lounge-deploy"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

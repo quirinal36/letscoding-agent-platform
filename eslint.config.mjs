@@ -7,6 +7,8 @@ export default tseslint.config(
       "**/coverage/**",
       "**/dist/**",
       "**/node_modules/**",
+      // 플러그인에 번들한 검증기와 제3자 의존성은 생성기가 책임진다.
+      "plugins/lounge-deploy/runtime/**",
       // Schema에서 생성한 파일은 생성기가 형식을 책임진다.
       "**/src/generated/**",
     ],

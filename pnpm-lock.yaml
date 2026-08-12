@@ -83,7 +83,14 @@ importers:
         specifier: workspace:*
         version: link:../policy-contract
 
-  plugins/lounge-deploy: {}
+  plugins/lounge-deploy:
+    dependencies:
+      '@letscoding/artifact-validator':
+        specifier: workspace:*
+        version: link:../../packages/artifact-validator
+      '@letscoding/policy-contract':
+        specifier: workspace:*
+        version: link:../../packages/policy-contract
 
   tests/policy-contract:
     dependencies:
