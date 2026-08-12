@@ -1,0 +1,37 @@
+{
+  "name": "letscoding-agent-platform",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.21.0+sha512.521705bce689924eac72f5a3587122f362689ef6571e55ba80076fd637c11132ecffada26fad4ea79c485bfddbfd3d5a2a5b05805a77e893de71ec8a6cca3bb1",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": "11.21.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "plugins/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm --recursive --if-present run build",
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
+    "ci": "pnpm verify:package-manager && pnpm check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "preinstall": "node scripts/verify-package-manager.mjs",
+    "test": "pnpm --recursive --if-present run test",
+    "typecheck": "pnpm --recursive --if-present run typecheck",
+    "verify:package-manager": "node scripts/verify-package-manager.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.13.3",
+    "eslint": "10.8.1",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.10"
+  }
+}
