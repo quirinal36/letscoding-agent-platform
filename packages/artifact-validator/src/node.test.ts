@@ -8,6 +8,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { parsePolicyDocumentText } from "@letscoding/policy-contract";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -22,10 +23,12 @@ import { artifactValidationPolicyFromDocument } from "./policy.js";
 
 let root: string;
 let fixtures: string;
-const POLICY_PATH = new URL(
-  "../../../policies/lounge-deploy/history/2026-08-12.2.json",
-  import.meta.url,
-).pathname;
+const POLICY_PATH = fileURLToPath(
+  new URL(
+    "../../../policies/lounge-deploy/history/2026-08-12.2.json",
+    import.meta.url,
+  ),
+);
 
 async function loadPolicy() {
   const parsed = parsePolicyDocumentText(await readFile(POLICY_PATH, "utf8"));
