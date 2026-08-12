@@ -12,4 +12,6 @@ policies/invalid/   거부되어야 하는 정책 문서. 파일명이 실패 �
 `INVALID_FIXTURES` 표에 있다. 새 검증 규칙을 추가하면 fixture와 그 표를 함께
 갱신한다.
 
-ZIP과 출력 폴더 fixture는 검증기 구현 이슈에서 추가한다.
+`artifacts/`는 ZIP과 출력 폴더 검사기의 보안 fixture 생성 방법을 설명한다.
+일반 도구가 만들지 못하는 손상 ZIP이 포함되므로 바이너리 대신 결정적 생성기와
+기대 code를 테스트한다.
