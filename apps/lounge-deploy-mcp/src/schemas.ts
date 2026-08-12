@@ -1,6 +1,10 @@
 import { z } from "zod/v4";
 
 import { ARTIFACT_VALIDATION_RULE_IDS } from "@letscoding/artifact-validator";
+import {
+  PROJECT_ANALYZER_LIMITS,
+  projectContentByteLimit,
+} from "@letscoding/project-analyzer";
 
 const policyIdSchema = z
   .string()
@@ -26,26 +30,68 @@ export const getPolicyInputSchema = z
   })
   .strict();
 
+const projectFileInputSchema = z
+  .object({
+    path: safePathSchema,
+    sizeBytes: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+    content: z
+      .string()
+      .max(256 * 1024)
+      .optional(),
+  })
+  .strict()
+  .superRefine((file, context) => {
+    if (file.content === undefined) return;
+    const byteLimit = projectContentByteLimit(file.path);
+    if (byteLimit === null) {
+      context.addIssue({
+        code: "custom",
+        path: ["content"],
+        message:
+          "이 경로는 metadata만 허용되며 파일 내용은 전송할 수 없습니다.",
+      });
+      return;
+    }
+    if (Buffer.byteLength(file.content, "utf8") > byteLimit) {
+      context.addIssue({
+        code: "custom",
+        path: ["content"],
+        message: `파일 내용이 ${byteLimit} byte 제한을 넘었습니다.`,
+      });
+    }
+  });
+
 export const analyzeProjectInputSchema = z
   .object({
     policyId: policyIdSchema.default("lounge-deploy"),
     version: policyVersionSchema.optional(),
     files: z
-      .array(
-        z
-          .object({
-            path: safePathSchema,
-            sizeBytes: z.number().int().nonnegative(),
-            content: z
-              .string()
-              .max(256 * 1024)
-              .optional(),
-          })
-          .strict(),
-      )
-      .max(2_000),
+      .array(projectFileInputSchema)
+      .max(PROJECT_ANALYZER_LIMITS.maxFiles),
   })
-  .strict();
+  .strict()
+  .superRefine((input, context) => {
+    const paths = new Set<string>();
+    let contentBytes = 0;
+    for (const [index, file] of input.files.entries()) {
+      if (paths.has(file.path)) {
+        context.addIssue({
+          code: "custom",
+          path: ["files", index, "path"],
+          message: "중복 파일 경로는 허용하지 않습니다.",
+        });
+      }
+      paths.add(file.path);
+      contentBytes += Buffer.byteLength(file.content ?? "", "utf8");
+    }
+    if (contentBytes > PROJECT_ANALYZER_LIMITS.maxTotalContentBytes) {
+      context.addIssue({
+        code: "custom",
+        path: ["files"],
+        message: `전체 파일 내용이 ${PROJECT_ANALYZER_LIMITS.maxTotalContentBytes} byte 제한을 넘었습니다.`,
+      });
+    }
+  });
 
 export const artifactManifestSchema = z
   .object({
@@ -271,11 +317,84 @@ export const getPolicyDataSchema = z
     guide: z.string(),
   })
   .strict();
+
+export const projectAnalysisResultSchema = z
+  .object({
+    pass: z.boolean(),
+    policy: z
+      .object({ id: policyIdSchema, version: policyVersionSchema })
+      .strict(),
+    framework: z
+      .object({
+        key: z.enum([
+          "single-html",
+          "plain-static",
+          "vite",
+          "nextjs",
+          "generic-static",
+        ]),
+        version: z.string().nullable(),
+        confidence: z.enum(["high", "medium", "low"]),
+        evidence: z.array(
+          z
+            .object({
+              kind: z.enum([
+                "config-file",
+                "dependency",
+                "file-pattern",
+                "lockfile",
+                "script",
+              ]),
+              file: safePathSchema,
+              detail: z.string().max(1_000),
+            })
+            .strict(),
+        ),
+      })
+      .strict(),
+    packageManager: z.enum(["pnpm", "npm", "yarn", "bun", "unknown"]),
+    build: z
+      .object({
+        command: z.string().max(2_000).nullable(),
+        outputDirectory: safePathSchema.nullable(),
+      })
+      .strict(),
+    findings: z.array(
+      z
+        .object({
+          code: z.string().min(1).max(128),
+          policyCode: z.string().min(1).max(128).optional(),
+          severity: z.enum(["blocker", "error", "warning", "recommendation"]),
+          message: z.string().max(2_000),
+          files: z.array(safePathSchema).max(PROJECT_ANALYZER_LIMITS.maxFiles),
+          recommendation: z.string().max(2_000),
+        })
+        .strict(),
+    ),
+    checklist: z.array(
+      z
+        .object({
+          id: z.string().min(1).max(128),
+          required: z.boolean(),
+          text: z.string().max(2_000),
+        })
+        .strict(),
+    ),
+    input: z
+      .object({
+        fileCount: z.number().int().nonnegative(),
+        inspectedContentFiles: z.number().int().nonnegative(),
+        inspectedContentBytes: z.number().int().nonnegative(),
+      })
+      .strict(),
+  })
+  .strict();
+
 export const analyzeProjectDataSchema = z
   .object({
     policyId: policyIdSchema,
     policyVersion: policyVersionSchema,
-    result: z.record(z.string(), z.unknown()),
+    result: projectAnalysisResultSchema,
   })
   .strict();
 

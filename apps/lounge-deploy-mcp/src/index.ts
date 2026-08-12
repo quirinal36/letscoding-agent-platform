@@ -30,4 +30,8 @@ export {
   createValidateArtifactHandler,
   type ArtifactValidationHandlerOptions,
 } from "./artifact-validation.js";
+export {
+  createAnalyzeProjectHandler,
+  type ProjectAnalysisHandlerOptions,
+} from "./project-analysis.js";
 export * from "./schemas.js";
