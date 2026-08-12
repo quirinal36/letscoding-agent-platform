@@ -562,6 +562,12 @@ const externalOriginSchema = z
   .url()
   .superRefine((value, context) => {
     const url = new URL(value);
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      context.addIssue({
+        code: "custom",
+        message: "외부 의존성 origin은 HTTP(S)만 허용합니다.",
+      });
+    }
     if (
       url.username !== "" ||
       url.password !== "" ||
@@ -712,6 +718,13 @@ export const reportJsonSchema = z
       })
       .strict()
       .nullable(),
+    analysis: z
+      .object({
+        pass: z.boolean().nullable(),
+        findingCodes: z.array(z.string()),
+        requiredChecklist: z.array(z.string()),
+      })
+      .strict(),
     changes: z.array(
       z.object({ path: z.string(), reason: z.string() }).strict(),
     ),

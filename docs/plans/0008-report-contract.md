@@ -21,7 +21,8 @@
 
 ## 보고 데이터와 결정성
 
-JSON은 정책, framework/version/confidence, 변경 파일과 이유, 실행 명령, 산출물
+JSON은 정책, framework/version/confidence, 분석 통과 여부·발견 code·필수 checklist,
+변경 파일과 이유, 실행 명령, 산출물
 크기·파일 수·hash·루트 `index.html`, 검증 decision과 code/waiver, 확인 기능, 외부
 origin, 공개 runtime env 이름, 남은 제한을 고정된 key 순서로 제공한다. Markdown은
 이 JSON 객체만으로 렌더링하므로 핵심 값과 상태가 다를 수 없다.
@@ -34,8 +35,9 @@ snapshot으로 고정한다.
 ## 문자열·정보 경계
 
 클라이언트 문자열은 단일 행으로 제한하고 Markdown code span의 backtick fence와
-일반 Markdown 특수문자를 안전하게 처리한다. 외부 주소는 credential, query, path가
-없는 origin만 받는다. 공개 runtime env는 이름만 받고 값 map은 계약에 없다.
+일반 Markdown 특수문자를 안전하게 처리한다. 외부 주소는 HTTP(S)이면서 credential,
+query, path가 없는 origin만 받는다. 공개 runtime env는 이름만 받고 값 map은 계약에
+없다.
 
 다음 secret 형태는 Schema에서 거부하고 renderer에서도 defense-in-depth로
 `[REDACTED]` 처리한다.

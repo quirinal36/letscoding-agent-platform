@@ -110,10 +110,22 @@ describe("create_report", () => {
       pass: report.pass,
       policy: report.json.policy,
       framework: report.json.framework,
+      analysis: report.json.analysis,
       artifact: report.json.artifact,
       validation: report.json.validation,
     }).toMatchInlineSnapshot(`
       {
+        "analysis": {
+          "findingCodes": [],
+          "pass": true,
+          "requiredChecklist": [
+            ".env는 ZIP과 분리하고 공개값은 window.__LETS_RUNTIME_ENV__에서 읽는다.",
+            "ZIP 직전에 정책을 다시 조회하고 최종 활성 version으로 검증한다.",
+            "소스 트리가 아니라 정적 출력물 내용만 패키징한다.",
+            "작업 시작 전에 활성 정책을 조회하고 version을 기록한다.",
+            "정규화된 ZIP 루트에 index.html이 있는지 확인한다.",
+          ],
+        },
         "artifact": {
           "artifactSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
           "compressedBytes": 100,
@@ -144,7 +156,7 @@ describe("create_report", () => {
         },
       }
     `);
-    expect(report.markdown.split("\n").slice(0, 17)).toMatchInlineSnapshot(`
+    expect(report.markdown.split("\n").slice(0, 22)).toMatchInlineSnapshot(`
       [
         "# Lounge Deploy 검증 보고서",
         "",
@@ -158,11 +170,16 @@ describe("create_report", () => {
         "- 프레임워크: \`single-html\`",
         "- 버전: \`확인되지 않음\`",
         "- 감지 신뢰도: \`high\`",
+        "- 분석 통과: **예**",
+        "- 분석 발견 코드: \`없음\`",
+        "- \\.env는 ZIP과 분리하고 공개값은 window\\.\\_\\_LETS\\_RUNTIME\\_ENV\\_\\_에서 읽는다\\.",
+        "- ZIP 직전에 정책을 다시 조회하고 최종 활성 version으로 검증한다\\.",
+        "- 소스 트리가 아니라 정적 출력물 내용만 패키징한다\\.",
+        "- 작업 시작 전에 활성 정책을 조회하고 version을 기록한다\\.",
+        "- 정규화된 ZIP 루트에 index\\.html이 있는지 확인한다\\.",
         "",
         "## 산출물",
         "",
-        "- 출력 폴더: \`dist\`",
-        "- ZIP 절대 경로: \`/tmp/game[1].zip\`",
       ]
     `);
     expect(report.markdown).toContain("표시 \\| 로직 \\#1 수정");
@@ -297,6 +314,18 @@ describe("create_report input boundary", () => {
           {
             kind: "api",
             origin: "https://api.example.com?token=value",
+            purpose: "조회",
+          },
+        ],
+      },
+    ],
+    [
+      "non-web origin",
+      {
+        externalOrigins: [
+          {
+            kind: "api",
+            origin: "ftp://api.example.com",
             purpose: "조회",
           },
         ],

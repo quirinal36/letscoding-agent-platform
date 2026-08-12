@@ -48,6 +48,19 @@ export function createReport(input: CreateReportInput): CreateReportData {
             version: input.analysis.result.framework.version,
             confidence: input.analysis.result.framework.confidence,
           },
+    analysis: {
+      pass: input.analysis?.result.pass ?? null,
+      findingCodes: stableStrings(
+        (input.analysis?.result.findings ?? []).map(({ code }) =>
+          safeReportString(code),
+        ),
+      ),
+      requiredChecklist: stableStrings(
+        (input.analysis?.result.checklist ?? [])
+          .filter(({ required }) => required)
+          .map(({ text }) => safeReportString(text)),
+      ),
+    },
     changes: stableSort(
       (context?.changedFiles ?? []).map(({ path, reason }) => ({
         path: safeReportString(path),
@@ -172,6 +185,12 @@ function renderMarkdown(report: CreateReportData["json"]): string {
           `- 버전: ${inline(report.framework.version ?? "확인되지 않음")}`,
           `- 감지 신뢰도: ${inline(report.framework.confidence)}`,
         ]),
+    `- 분석 통과: **${report.analysis.pass === null ? "결과 없음" : report.analysis.pass ? "예" : "아니요"}**`,
+    `- 분석 발견 코드: ${inline(report.analysis.findingCodes.join(", ") || "없음")}`,
+    ...listOrNone(
+      report.analysis.requiredChecklist.map(escapeMarkdown),
+      "필수 체크리스트 없음",
+    ),
     "",
     "## 산출물",
     "",
