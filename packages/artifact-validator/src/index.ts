@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+export { artifactValidationPolicyFromDocument } from "./policy.js";
+
 export const ARTIFACT_VALIDATION_RULE_IDS = [
   "artifact-type-invalid",
   "compressed-size-required",
@@ -60,6 +62,11 @@ export interface ArtifactValidationPolicy {
     readonly blockedSegmentPrefixes: readonly string[];
     /** Full relative paths blocked case-insensitively. */
     readonly blockedPaths?: readonly string[];
+    /**
+     * Policy-native blocked filename rules. These preserve the individual
+     * policy code for entries such as `.env*` and `runtime-config.js`.
+     */
+    readonly blockedFilenameRules?: readonly ArtifactBlockedFilenameRule[];
   };
   readonly paths: {
     readonly forbidBackslashes: boolean;
@@ -69,6 +76,8 @@ export interface ArtifactValidationPolicy {
     readonly forbidControlCharacters: boolean;
     /** Characters such as `%?#;` that can change URL interpretation. */
     readonly forbiddenUrlCharacters: string;
+    /** Optional policy-native rules for path kinds that share a legacy rule ID. */
+    readonly rules?: ArtifactPathRules;
   };
   readonly structure: {
     readonly rootFile: string;
@@ -78,6 +87,21 @@ export interface ArtifactValidationPolicy {
   readonly rules: Partial<
     Readonly<Record<ArtifactValidationRuleId, ArtifactValidationRule>>
   >;
+}
+
+export interface ArtifactBlockedFilenameRule {
+  readonly match: "exact" | "prefix" | "suffix";
+  readonly value: string;
+  readonly rule: ArtifactValidationRule;
+}
+
+export interface ArtifactPathRules {
+  readonly absolute?: ArtifactValidationRule;
+  readonly parentTraversal?: ArtifactValidationRule;
+  readonly backslash?: ArtifactValidationRule;
+  readonly controlCharacter?: ArtifactValidationRule;
+  readonly urlReinterpret?: ArtifactValidationRule;
+  readonly nonNormalized?: ArtifactValidationRule;
 }
 
 export interface ArtifactManifestFile {
@@ -183,8 +207,9 @@ export function validateArtifact(
   const addFinding = (
     ruleId: ArtifactValidationRuleId,
     fileIndexes: readonly number[] = [],
+    ruleOverride?: ArtifactValidationRule,
   ): void => {
-    const rule = policy.rules[ruleId];
+    const rule = ruleOverride ?? policy.rules[ruleId];
     if (rule === undefined) return;
     pendingFindings.push({
       ruleId,
@@ -351,6 +376,7 @@ function validatePathsAndFiles(
   addFinding: (
     ruleId: ArtifactValidationRuleId,
     fileIndexes?: readonly number[],
+    ruleOverride?: ArtifactValidationRule,
   ) => void,
 ): void {
   const allowedExtensions = new Set(
@@ -367,6 +393,7 @@ function validatePathsAndFiles(
   const blockedPaths = new Set(
     (policy.files.blockedPaths ?? []).map((path) => path.toLowerCase()),
   );
+  const blockedFilenameRules = policy.files.blockedFilenameRules ?? [];
   const forbiddenUrlCharacters = new Set(policy.paths.forbiddenUrlCharacters);
 
   for (const { file, index } of indexedFiles) {
@@ -383,7 +410,7 @@ function validatePathsAndFiles(
     const basename = lowerSegments.at(-1) ?? "";
 
     if (policy.paths.forbidBackslashes && path.includes("\\")) {
-      addFinding("path-backslash", [index]);
+      addFinding("path-backslash", [index], policy.paths.rules?.backslash);
     }
     if (
       policy.paths.forbidAbsolutePaths &&
@@ -391,28 +418,50 @@ function validatePathsAndFiles(
         path.startsWith("\\") ||
         WINDOWS_ABSOLUTE_PATH_PATTERN.test(path))
     ) {
-      addFinding("path-absolute", [index]);
+      addFinding("path-absolute", [index], policy.paths.rules?.absolute);
     }
-    if (
-      policy.paths.forbidDotSegments &&
-      allSegments.some((segment) => segment === "." || segment === "..")
-    ) {
-      addFinding("path-dot-segment", [index]);
+    if (policy.paths.forbidDotSegments) {
+      if (allSegments.includes("..")) {
+        addFinding(
+          "path-dot-segment",
+          [index],
+          policy.paths.rules?.parentTraversal,
+        );
+      }
+      if (allSegments.includes(".")) {
+        addFinding(
+          "path-dot-segment",
+          [index],
+          policy.paths.rules?.nonNormalized,
+        );
+      }
     }
     if (
       policy.paths.forbidEmptySegments &&
       slashSegments.some((segment) => segment.length === 0)
     ) {
-      addFinding("path-empty-segment", [index]);
+      addFinding(
+        "path-empty-segment",
+        [index],
+        policy.paths.rules?.nonNormalized,
+      );
     }
     if (path.length > policy.limits.maxPathLength) {
       addFinding("path-too-long", [index]);
     }
     if ([...path].some((character) => forbiddenUrlCharacters.has(character))) {
-      addFinding("path-url-character", [index]);
+      addFinding(
+        "path-url-character",
+        [index],
+        policy.paths.rules?.urlReinterpret,
+      );
     }
     if (policy.paths.forbidControlCharacters && hasControlCharacter(path)) {
-      addFinding("path-control-character", [index]);
+      addFinding(
+        "path-control-character",
+        [index],
+        policy.paths.rules?.controlCharacter,
+      );
     }
 
     const extension = getExtension(basename);
@@ -429,7 +478,23 @@ function validatePathsAndFiles(
     ) {
       addFinding("blocked-file", [index]);
     }
+
+    for (const blockedRule of blockedFilenameRules) {
+      if (matchesBlockedFilename(basename, blockedRule)) {
+        addFinding("blocked-file", [index], blockedRule.rule);
+      }
+    }
   }
+}
+
+function matchesBlockedFilename(
+  basename: string,
+  blockedRule: ArtifactBlockedFilenameRule,
+): boolean {
+  const value = blockedRule.value.toLowerCase();
+  if (blockedRule.match === "exact") return basename === value;
+  if (blockedRule.match === "prefix") return basename.startsWith(value);
+  return basename.endsWith(value);
 }
 
 function validatePathCollisions(
