@@ -1,0 +1,11 @@
+{
+  "name": "lounge-vite-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "8.1.5"
+  }
+}
