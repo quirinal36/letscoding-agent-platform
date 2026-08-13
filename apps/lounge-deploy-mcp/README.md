@@ -43,6 +43,12 @@ Markdown으로 변환한다. 최종 검증·분석·정책이 모두 성공하�
 표현한다. client 문자열은 단일 행·비밀값 차단 계약을 거치고 Markdown 구조에 맞게
 escape한다. 보고서는 서버에 저장하지 않는다.
 
+#13에서 ADR-0002의 익명 경계를 적용했다. bearer token과 client가 보낸 user/org/role
+header는 신뢰하지 않고 명시적으로 거부한다. 공개 도구 allowlist, route body·timeout,
+일일 회전 네트워크 가명키의 fixed-window 요청 제한, 동시성 제한을 적용한다. 감사
+로그는 payload나 message/stack 대신 request ID, 도구, 정책, 결과 code, 산출물
+크기·파일 수·hash, latency만 JSON line으로 기록한다.
+
 정책은 빌드 전에 다음 명령으로 검증해 TypeScript bundle로 생성한다. 생성 파일은
 직접 편집하지 않는다.
 
@@ -52,17 +58,24 @@ corepack pnpm --filter @letscoding/lounge-deploy-mcp generate:policy-bundle
 
 ## 설정
 
-| 환경 변수              | 기본값         | 설명                             |
-| ---------------------- | -------------- | -------------------------------- |
-| `LETS_ENV`             | `dev`          | `dev`, `test`, `staging`, `prod` |
-| `LETS_REVISION`        | 로컬만 `local` | 배포 revision; staging/prod 필수 |
-| `LETS_MAX_BODY_BYTES`  | `1048576`      | MCP route 전체 body 제한         |
-| `LETS_TOOL_TIMEOUT_MS` | `5000`         | 도구별 실행 제한(최대 30초)      |
-| `PORT`                 | `3000`         | 로컬 Node HTTP port              |
+| 환경 변수                      | 기본값         | 설명                                     |
+| ------------------------------ | -------------- | ---------------------------------------- |
+| `LETS_ENV`                     | `dev`          | `dev`, `test`, `staging`, `prod`         |
+| `LETS_REVISION`                | 로컬만 `local` | 배포 revision; staging/prod 필수         |
+| `LETS_MAX_BODY_BYTES`          | `1048576`      | MCP route 전체 body 제한                 |
+| `LETS_TOOL_TIMEOUT_MS`         | `5000`         | 도구별 실행 제한(최대 30초)              |
+| `LETS_NETWORK_KEY_SECRET`      | 로컬만 내장값  | 네트워크 가명화 HMAC key; 원격 환경 필수 |
+| `LETS_RATE_LIMIT_MAX_REQUESTS` | `120`          | fixed window당 익명 네트워크 요청 수     |
+| `LETS_RATE_LIMIT_WINDOW_MS`    | `60000`        | 인스턴스 내 제한 window                  |
+| `LETS_MAX_CONCURRENT_REQUESTS` | `8`            | 인스턴스 내 동시 MCP 요청 수             |
+| `PORT`                         | `3000`         | 로컬 Node HTTP port                      |
 
 `staging`과 `prod`는 서로 다른 Vercel 프로젝트/환경 변수로 운영한다. readiness는
 비밀값이나 사용자 정보를 반환하지 않는다. 1차 public 도구는 ADR-0002에 따라
 익명이며 user/org/role을 입력 계약이나 권한 근거로 받지 않는다.
+원격 환경은 Vercel이 spoofing 방지 후 제공하는 `x-vercel-forwarded-for`만 네트워크
+신호로 사용하며 원문 IP를 감사 event에 넣지 않는다. 인스턴스 메모리 제한은 보조
+안전장치이므로 운영 전 WAF 제한과 로그 보존·접근 설정도 적용해야 한다.
 
 ## 개발 및 배포 검증
 
