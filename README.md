@@ -42,6 +42,7 @@ apps/lounge-deploy-mcp/       원격 MCP 서비스
 plugins/lounge-deploy/        Codex Plugin 배포 단위
 packages/policy-contract/     정책 계약
 packages/artifact-validator/  artifact 검증기
+packages/project-analyzer/    정적 배포 호환성 분석기
 packages/mcp-auth/            MCP 인증·권한 공통 모듈
 packages/audit-log/           감사 로그 공통 모듈
 policies/lounge-deploy/       중앙 정책 원본
