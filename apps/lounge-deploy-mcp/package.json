@@ -19,13 +19,15 @@
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint src --max-warnings=0",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.vercel.json"
   },
   "dependencies": {
     "@letscoding/artifact-validator": "workspace:*",
     "@letscoding/audit-log": "workspace:*",
     "@letscoding/mcp-auth": "workspace:*",
-    "@letscoding/policy-contract": "workspace:*"
+    "@letscoding/policy-contract": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.4.3"
   },
   "engines": {
     "node": ">=24 <25"
