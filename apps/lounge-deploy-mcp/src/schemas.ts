@@ -151,7 +151,11 @@ export const getPolicyDataSchema = z
     policyId: policyIdSchema,
     version: policyVersionSchema,
     effectiveAt: z.string(),
+    resolvedAt: z.string(),
+    active: z.boolean(),
+    activatedAt: z.string().optional(),
     contentHash: sha256Schema,
+    etag: z.string(),
     policy: z.record(z.string(), z.unknown()),
     guide: z.string(),
   })

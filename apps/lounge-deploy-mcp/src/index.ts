@@ -20,4 +20,10 @@ export {
   type ToolErrorEnvelope,
   type ToolSuccessEnvelope,
 } from "./errors.js";
+export {
+  createGetPolicyHandler,
+  verifyActivePolicy,
+  type PolicyRepositoryOptions,
+} from "./policy-repository.js";
+export { createBundledPolicySource } from "./bundled-policy-source.js";
 export * from "./schemas.js";

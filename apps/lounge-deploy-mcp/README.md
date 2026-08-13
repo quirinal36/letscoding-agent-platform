@@ -24,9 +24,19 @@ envelope를 사용한다. unknown 입력 필드는 handler 실행 전에 거부�
 구조화된 tool error이며 JSON 파싱/transport 오류와 구분된다. `upload_to_lounge`는
 등록하지 않는다.
 
-#8에서는 도구 계약과 주입 가능한 handler 경계만 제공한다. 실제 handler는
-#9~#12에서 공용 policy/validator/analyzer 패키지에 연결한다. 기본 handler는
+#9에서 `get_policy`를 발행된 정책 bundle에 연결했다. `current.json`을 한 번 읽어
+선택한 immutable JSON/Markdown snapshot을 함께 반환하며, 명시한 과거 버전도 조회할
+수 있다. 응답의 `contentHash`와 `etag`는 정규화한 snapshot 전체를 식별한다. 소스가
+없거나 손상되면 캐시된 정책으로 우회하지 않고 구조화된 domain 오류로 닫힌다.
+나머지 handler는 #10~#12에서 공용 validator/analyzer 패키지에 연결하며, 연결 전에는
 `TOOL_NOT_IMPLEMENTED` domain 오류로 fail-closed한다.
+
+정책은 빌드 전에 다음 명령으로 검증해 TypeScript bundle로 생성한다. 생성 파일은
+직접 편집하지 않는다.
+
+```sh
+corepack pnpm --filter @letscoding/lounge-deploy-mcp generate:policy-bundle
+```
 
 ## 설정
 
@@ -51,6 +61,8 @@ corepack pnpm --filter @letscoding/lounge-deploy-mcp build
 
 테스트는 임시 loopback HTTP server와 실제 SDK client로 initialize, tool discovery,
 호출, timeout, payload limit, health/readiness를 확인하고 client/server를 종료한다.
+정책 repository 테스트는 현재·명시 버전, current 전환 중 snapshot 일관성, 해시
+안정성, 손상·누락·source 장애 시 fail-closed 동작을 확인한다.
 
 Vercel project root는 `apps/lounge-deploy-mcp`로 설정한다. `vercel.json`이 `icn1`,
 함수 duration/memory를 고정하고 `api/mcp.ts`, `api/health.ts`, `api/ready.ts`가 각
