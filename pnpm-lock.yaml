@@ -44,6 +44,9 @@ importers:
       '@letscoding/policy-contract':
         specifier: workspace:*
         version: link:../../packages/policy-contract
+      '@letscoding/project-analyzer':
+        specifier: workspace:*
+        version: link:../../packages/project-analyzer
       '@modelcontextprotocol/sdk':
         specifier: ^1.30.0
         version: 1.30.0(zod@4.4.3)

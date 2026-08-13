@@ -66,7 +66,34 @@ function successHandlers(): LoungeDeployToolHandlers {
       return {
         policyId: input.policyId,
         policyVersion: input.version ?? "2026-08-12.2",
-        result: { pass: true },
+        result: {
+          pass: true,
+          policy: {
+            id: input.policyId,
+            version: input.version ?? "2026-08-12.2",
+          },
+          framework: {
+            key: "single-html",
+            version: null,
+            confidence: "high",
+            evidence: [
+              {
+                kind: "file-pattern",
+                file: "index.html",
+                detail: "single HTML",
+              },
+            ],
+          },
+          packageManager: "unknown",
+          build: { command: null, outputDirectory: "." },
+          findings: [],
+          checklist: [],
+          input: {
+            fileCount: input.files.length,
+            inspectedContentFiles: 0,
+            inspectedContentBytes: 0,
+          },
+        },
       };
     },
     async validate_artifact(input) {

@@ -26,4 +26,8 @@ export {
   type PolicyRepositoryOptions,
 } from "./policy-repository.js";
 export { createBundledPolicySource } from "./bundled-policy-source.js";
+export {
+  createAnalyzeProjectHandler,
+  type ProjectAnalysisHandlerOptions,
+} from "./project-analysis.js";
 export * from "./schemas.js";

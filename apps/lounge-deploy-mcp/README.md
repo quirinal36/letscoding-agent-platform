@@ -28,7 +28,10 @@ envelope를 사용한다. unknown 입력 필드는 handler 실행 전에 거부�
 선택한 immutable JSON/Markdown snapshot을 함께 반환하며, 명시한 과거 버전도 조회할
 수 있다. 응답의 `contentHash`와 `etag`는 정규화한 snapshot 전체를 식별한다. 소스가
 없거나 손상되면 캐시된 정책으로 우회하지 않고 구조화된 domain 오류로 닫힌다.
-나머지 handler는 #10~#12에서 공용 validator/analyzer 패키지에 연결하며, 연결 전에는
+`analyze_project`도 #10에서 공용 project analyzer에 연결했다. 요청마다 먼저 현재
+또는 명시 버전 정책 snapshot을 선택하고, 제한된 파일 metadata와 allowlisted 설정
+내용만 분석한다. `.env*`와 lockfile 내용은 Schema 단계에서 거부하며 원문은 응답에
+반사하지 않는다. 나머지 handler는 #11~#12에서 연결하며, 연결 전에는
 `TOOL_NOT_IMPLEMENTED` domain 오류로 fail-closed한다.
 
 정책은 빌드 전에 다음 명령으로 검증해 TypeScript bundle로 생성한다. 생성 파일은
