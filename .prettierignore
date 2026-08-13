@@ -13,3 +13,4 @@ policies
 
 # 생성물은 생성기가 직접 포맷한다.
 packages/policy-contract/src/generated
+plugins/lounge-deploy/runtime

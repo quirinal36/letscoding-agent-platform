@@ -1,8 +1,13 @@
 # Dependencies
 node_modules/
+# Lounge Deploy Plugin은 새 설치에서 즉시 실행할 validator runtime을 의도적으로 번들한다.
+!plugins/lounge-deploy/runtime/node_modules/
+!plugins/lounge-deploy/runtime/node_modules/**
 
 # Build and test output
 dist/
+!plugins/lounge-deploy/runtime/node_modules/**/dist/
+!plugins/lounge-deploy/runtime/node_modules/**/dist/**
 coverage/
 *.tsbuildinfo
 
