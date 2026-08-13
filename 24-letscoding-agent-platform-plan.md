@@ -17,6 +17,9 @@ Skill과 Plugin만 배포하면 사용자의 설치본이 오래될 수 있다. 
   clean-room E2E, CI/CD와 운영 runbook의 저장소 구현이 완료되었다.
 - 자동 clean-room E2E는 단일 HTML, 순수 HTML/CSS/JS, Vite, Next.js와 실패·정책 전환
   시나리오를 검증한다.
+- 첫 출시는 1인 운영으로 승인되었다. 두 번째 operator가 생기기 전에는 PR 승인 수와
+  production required reviewer를 0으로 두고 필수 CI·수동 SHA dispatch·staging 및
+  traffic 없는 production candidate smoke를 보완 통제로 사용한다.
 - [로드맵 이슈 #17](https://github.com/quirinal36/letscoding-agent-platform/issues/17)은
   외부 인프라 설정, production drill, 공개 Plugin 등록과 별도 실제 Codex 계정 UI 인수
   확인이 끝날 때까지 출시 추적용으로 열어 둔다.
@@ -302,7 +305,8 @@ ADR을 먼저 승인하고, 정책 편집 API와 일반 MCP를 분리한 뒤 인
 
 ### 출시 전 사람·외부 운영 게이트
 
-- [ ] GitHub `main` ruleset과 staging/production Environment 보호 규칙 승인·적용
+- [ ] 승인된 1인 운영안대로 GitHub `main` ruleset과 staging/production Environment 보호
+  규칙 적용
 - [ ] Vercel staging/prod, DNS/TLS, 환경별 secret, WAF, audit sink/RBAC·경보 설정
 - [ ] staging→production 승격, canonical smoke, rollback, WAF·audit sink 실제 drill
 - [ ] prod MCP의 ChatGPT 기술 ID 발급과 공개 Plugin metadata·지원 책임자 승인
