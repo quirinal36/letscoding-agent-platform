@@ -7,6 +7,7 @@ import {
   verifyActivePolicy,
 } from "./policy-repository.js";
 import { createAnalyzeProjectHandler } from "./project-analysis.js";
+import { createReportHandler } from "./report.js";
 
 const policySource = createBundledPolicySource();
 const getPolicy = createGetPolicyHandler({
@@ -20,6 +21,7 @@ export const loungeDeployHttpHandler = createLoungeDeployHttpHandler({
     get_policy: getPolicy,
     validate_artifact: createValidateArtifactHandler({ getPolicy }),
     analyze_project: createAnalyzeProjectHandler({ getPolicy }),
+    create_report: createReportHandler,
   },
   readinessProbes: [
     {

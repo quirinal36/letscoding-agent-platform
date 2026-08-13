@@ -6,6 +6,8 @@ import {
   projectContentByteLimit,
 } from "@letscoding/project-analyzer";
 
+import { looksSensitive } from "./sensitive-data.js";
+
 const policyIdSchema = z
   .string()
   .min(1)
@@ -22,6 +24,42 @@ const findingCodeSchema = z
   .max(128)
   .regex(/^[A-Z][A-Z0-9_]*$/);
 const safePathSchema = z.string().min(1).max(4096);
+const reportTextSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(2_000)
+  .refine(
+    (value) => !hasControlCharacter(value),
+    "제어 문자는 허용하지 않습니다.",
+  )
+  .refine(
+    (value) => !looksSensitive(value),
+    "비밀값 또는 인증 정보로 보이는 문자열은 보고서 입력에 넣을 수 없습니다.",
+  );
+const reportPathSchema = z
+  .string()
+  .min(1)
+  .max(4096)
+  .refine(
+    (value) => value === value.trim(),
+    "경로 앞뒤에 공백을 사용할 수 없습니다.",
+  )
+  .refine(
+    (value) => !hasControlCharacter(value),
+    "경로에 제어 문자를 사용할 수 없습니다.",
+  )
+  .refine(
+    (value) => !looksSensitive(value),
+    "비밀값으로 보이는 경로는 보고서 입력에 넣을 수 없습니다.",
+  );
+
+function hasControlCharacter(value: string): boolean {
+  return [...value].some((character) => {
+    const point = character.codePointAt(0);
+    return point !== undefined && (point <= 0x1f || point === 0x7f);
+  });
+}
 
 export const getPolicyInputSchema = z
   .object({
@@ -242,28 +280,6 @@ export const validateArtifactInputSchema = z
       });
     }
   });
-
-export const createReportInputSchema = z
-  .object({
-    policyId: policyIdSchema.default("lounge-deploy"),
-    policyVersion: policyVersionSchema,
-    analysis: z.record(z.string(), z.unknown()).optional(),
-    validation: z.record(z.string(), z.unknown()),
-    clientContext: z
-      .object({
-        changedFiles: z.array(safePathSchema).max(2_000).optional(),
-        commands: z.array(z.string().max(2_000)).max(100).optional(),
-        outputDirectory: safePathSchema.optional(),
-        zipPath: z.string().min(1).max(4096).optional(),
-        remainingLimitations: z
-          .array(z.string().max(2_000))
-          .max(100)
-          .optional(),
-      })
-      .strict()
-      .optional(),
-  })
-  .strict();
 
 const errorSchema = z
   .object({
@@ -539,14 +555,260 @@ export const validateArtifactDataSchema = z
       });
     }
   });
+
+const externalOriginSchema = z
+  .string()
+  .max(2_048)
+  .url()
+  .superRefine((value, context) => {
+    const url = new URL(value);
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      context.addIssue({
+        code: "custom",
+        message: "외부 의존성 origin은 HTTP(S)만 허용합니다.",
+      });
+    }
+    if (
+      url.username !== "" ||
+      url.password !== "" ||
+      url.search !== "" ||
+      url.hash !== "" ||
+      (url.pathname !== "" && url.pathname !== "/")
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "외부 의존성은 credential/query/path 없는 origin만 허용합니다.",
+      });
+    }
+  });
+
+export const createReportInputSchema = z
+  .object({
+    policyId: policyIdSchema.default("lounge-deploy"),
+    policyVersion: policyVersionSchema,
+    analysis: analyzeProjectDataSchema.optional(),
+    validation: validateArtifactDataSchema,
+    clientContext: z
+      .object({
+        changedFiles: z
+          .array(
+            z
+              .object({
+                path: reportPathSchema,
+                reason: reportTextSchema,
+              })
+              .strict(),
+          )
+          .max(2_000)
+          .optional(),
+        commands: z
+          .array(
+            z
+              .object({
+                sequence: z.number().int().positive().max(100),
+                command: reportTextSchema,
+                purpose: reportTextSchema.optional(),
+              })
+              .strict(),
+          )
+          .max(100)
+          .optional(),
+        outputDirectory: reportPathSchema.optional(),
+        zipPath: reportPathSchema.optional(),
+        verifiedFeatures: z.array(reportTextSchema).max(100).optional(),
+        externalOrigins: z
+          .array(
+            z
+              .object({
+                kind: z.enum(["api", "cdn", "csp"]),
+                origin: externalOriginSchema,
+                purpose: reportTextSchema,
+              })
+              .strict(),
+          )
+          .max(100)
+          .optional(),
+        runtimeEnvNames: z
+          .array(z.string().regex(/^[A-Z][A-Z0-9_]*$/))
+          .max(100)
+          .optional(),
+        remainingLimitations: z.array(reportTextSchema).max(100).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict()
+  .superRefine((input, context) => {
+    if (
+      input.validation.policyId !== input.policyId ||
+      input.validation.policyVersion !== input.policyVersion
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["validation"],
+        message: "보고서와 최종 검증의 정책 ID/version이 일치해야 합니다.",
+      });
+    }
+    if (input.validation.pass) {
+      if (input.clientContext?.outputDirectory === undefined) {
+        context.addIssue({
+          code: "custom",
+          path: ["clientContext", "outputDirectory"],
+          message: "성공 보고에는 정적 출력 폴더가 필요합니다.",
+        });
+      }
+      if (input.clientContext?.zipPath === undefined) {
+        context.addIssue({
+          code: "custom",
+          path: ["clientContext", "zipPath"],
+          message: "성공 보고에는 ZIP 절대 경로가 필요합니다.",
+        });
+      } else if (!isAbsoluteLocalPath(input.clientContext.zipPath)) {
+        context.addIssue({
+          code: "custom",
+          path: ["clientContext", "zipPath"],
+          message: "성공 보고의 ZIP 경로는 절대 경로여야 합니다.",
+        });
+      }
+      if ((input.clientContext?.commands?.length ?? 0) === 0) {
+        context.addIssue({
+          code: "custom",
+          path: ["clientContext", "commands"],
+          message: "성공 보고에는 실행한 검사/build 명령이 필요합니다.",
+        });
+      }
+    }
+    const sequences = input.clientContext?.commands?.map(
+      ({ sequence }) => sequence,
+    );
+    if (
+      sequences !== undefined &&
+      new Set(sequences).size !== sequences.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["clientContext", "commands"],
+        message: "실행 명령 sequence는 중복될 수 없습니다.",
+      });
+    }
+  });
+
+function isAbsoluteLocalPath(value: string): boolean {
+  return value.startsWith("/") || /^[A-Z]:[\\/]/i.test(value);
+}
+
+export const reportJsonSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    status: z.enum(["completed", "failed", "revalidation-required"]),
+    pass: z.boolean(),
+    policy: z
+      .object({
+        id: policyIdSchema,
+        version: policyVersionSchema,
+        analysisVersion: policyVersionSchema.nullable(),
+      })
+      .strict(),
+    framework: z
+      .object({
+        key: z.string(),
+        version: z.string().nullable(),
+        confidence: z.enum(["high", "medium", "low"]),
+      })
+      .strict()
+      .nullable(),
+    analysis: z
+      .object({
+        pass: z.boolean().nullable(),
+        findingCodes: z.array(z.string()),
+        requiredChecklist: z.array(z.string()),
+      })
+      .strict(),
+    changes: z.array(
+      z.object({ path: z.string(), reason: z.string() }).strict(),
+    ),
+    commands: z.array(
+      z
+        .object({
+          sequence: z.number().int().positive(),
+          command: z.string(),
+          purpose: z.string().nullable(),
+        })
+        .strict(),
+    ),
+    artifact: z
+      .object({
+        kind: z.enum(["directory", "zip"]),
+        outputDirectory: z.string().nullable(),
+        zipPath: z.string().nullable(),
+        compressedBytes: z.number().int().nonnegative().nullable(),
+        uncompressedBytes: z.number().int().nonnegative(),
+        fileCount: z.number().int().nonnegative(),
+        artifactSha256: sha256Schema,
+        fileSetSha256: sha256Schema,
+        rootIndexHtml: z.boolean(),
+      })
+      .strict(),
+    validation: z
+      .object({
+        decision: z.enum([
+          "PASS",
+          "VALIDATION_FAILED",
+          "LOCAL_VALIDATION_FAILED",
+          "REVALIDATION_REQUIRED",
+        ]),
+        errorCodes: z.array(findingCodeSchema),
+        warnings: z.array(
+          z
+            .object({
+              code: findingCodeSchema,
+              waived: z.boolean(),
+              reason: z.string().nullable(),
+            })
+            .strict(),
+        ),
+      })
+      .strict(),
+    verifiedFeatures: z.array(z.string()),
+    externalOrigins: z.array(
+      z
+        .object({
+          kind: z.enum(["api", "cdn", "csp"]),
+          origin: z.string(),
+          purpose: z.string(),
+        })
+        .strict(),
+    ),
+    runtimeEnvNames: z.array(z.string()),
+    remainingLimitations: z.array(z.string()),
+  })
+  .strict();
+
 export const createReportDataSchema = z
   .object({
     policyId: policyIdSchema,
     policyVersion: policyVersionSchema,
+    status: z.enum(["completed", "failed", "revalidation-required"]),
+    pass: z.boolean(),
+    reportHash: sha256Schema,
     markdown: z.string(),
-    json: z.record(z.string(), z.unknown()),
+    json: reportJsonSchema,
   })
-  .strict();
+  .strict()
+  .superRefine((report, context) => {
+    if (
+      report.status !== report.json.status ||
+      report.pass !== report.json.pass ||
+      report.policyId !== report.json.policy.id ||
+      report.policyVersion !== report.json.policy.version
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "보고서 envelope와 JSON 핵심 값이 일치해야 합니다.",
+      });
+    }
+  });
 
 export type GetPolicyInput = z.infer<typeof getPolicyInputSchema>;
 export type AnalyzeProjectInput = z.infer<typeof analyzeProjectInputSchema>;

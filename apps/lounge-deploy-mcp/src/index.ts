@@ -34,4 +34,5 @@ export {
   createAnalyzeProjectHandler,
   type ProjectAnalysisHandlerOptions,
 } from "./project-analysis.js";
+export { createReport, createReportHandler } from "./report.js";
 export * from "./schemas.js";
