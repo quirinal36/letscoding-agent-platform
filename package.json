@@ -12,19 +12,26 @@
     "apps/*",
     "plugins/*",
     "packages/*",
-    "tests/policy-contract"
+    "tests/policy-contract",
+    "tests/plugin-e2e",
+    "tests/operations"
   ],
   "scripts": {
+    "audit:dependencies": "pnpm audit --prod --audit-level high",
     "build": "pnpm --recursive --if-present run build",
     "check": "pnpm lint && pnpm format:check && pnpm build && pnpm typecheck && pnpm test",
-    "ci": "pnpm verify:package-manager && pnpm check",
+    "ci": "pnpm verify:package-manager && pnpm verify:secrets && pnpm verify:plugin && pnpm check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0",
     "preinstall": "node scripts/verify-package-manager.mjs",
+    "release:bundle": "node scripts/create-release-artifact.mjs",
     "test": "pnpm --recursive --if-present run test",
     "typecheck": "pnpm --recursive --if-present run typecheck",
-    "verify:package-manager": "node scripts/verify-package-manager.mjs"
+    "verify:package-manager": "node scripts/verify-package-manager.mjs",
+    "verify:plugin": "node scripts/validate-plugin-package.mjs",
+    "verify:policy-change": "node scripts/verify-policy-change.mjs",
+    "verify:secrets": "node scripts/verify-tracked-secrets.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

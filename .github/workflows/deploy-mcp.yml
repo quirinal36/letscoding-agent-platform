@@ -1,0 +1,135 @@
+name: Deploy Lounge Deploy MCP
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Full commit SHA already merged to main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lounge-deploy-mcp-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify requested main revision
+    runs-on: ubuntu-latest
+    outputs:
+      revision: ${{ steps.revision.outputs.sha }}
+    steps:
+      - name: Check out requested revision
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision }}
+          fetch-depth: 0
+
+      - name: Require an exact commit on main
+        id: revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          SHA="$(git rev-parse HEAD)"
+          test "${#SHA}" -eq 40
+          git merge-base --is-ancestor "$SHA" origin/main
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Enable the pinned pnpm release
+        run: corepack enable
+
+      - name: Install and run all release gates
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run ci
+          pnpm audit:dependencies
+
+  staging:
+    name: Deploy and smoke staging
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Check out verified revision
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.verify.outputs.revision }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Enable pnpm and deploy exact revision
+        id: deploy
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          corepack enable
+          URL="$(pnpm dlx vercel@58.9.5 deploy --yes --target=staging --token "$VERCEL_TOKEN" --env LETS_ENV=staging --env LETS_REVISION=${{ needs.verify.outputs.revision }} --meta gitSha=${{ needs.verify.outputs.revision }})"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke staging revision and MCP protocol
+        run: node scripts/smoke-deployment.mjs '${{ steps.deploy.outputs.url }}' '${{ needs.verify.outputs.revision }}'
+
+  production:
+    name: Stage and promote production artifact
+    needs: [verify, staging]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.candidate.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Check out the same verified revision
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.verify.outputs.revision }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+
+      - name: Create a staged production deployment
+        id: candidate
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          corepack enable
+          URL="$(pnpm dlx vercel@58.9.5 deploy --yes --prod --skip-domain --token "$VERCEL_TOKEN" --env LETS_ENV=prod --env LETS_REVISION=${{ needs.verify.outputs.revision }} --meta gitSha=${{ needs.verify.outputs.revision }})"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke the production artifact before traffic
+        run: node scripts/smoke-deployment.mjs '${{ steps.candidate.outputs.url }}' '${{ needs.verify.outputs.revision }}'
+
+      - name: Promote the tested deployment without rebuilding
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: corepack pnpm dlx vercel@58.9.5 promote '${{ steps.candidate.outputs.url }}' --yes --token "$VERCEL_TOKEN"
+
+      - name: Smoke the promoted production URL
+        run: node scripts/smoke-deployment.mjs 'https://lounge-deploy-mcp.letscoding.kr' '${{ needs.verify.outputs.revision }}'

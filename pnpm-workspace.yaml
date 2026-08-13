@@ -4,7 +4,12 @@ packages:
   - packages/*
   - tests/policy-contract
   - tests/plugin-e2e
+  - tests/operations
 allowBuilds:
   # 실제 Vite/Next clean-room E2E에 필요한 lockfile 고정 install script만 허용한다.
   esbuild: true
   sharp: true
+overrides:
+  # Next E2E transitive dependencies: GitHub-reviewed 2026 high advisories patched.
+  postcss: 8.5.23
+  sharp: 0.35.3

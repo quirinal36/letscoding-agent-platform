@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -93,6 +93,16 @@ describe("Lounge Deploy plugin package", () => {
       await rm(fixture, { recursive: true, force: true });
     }
   });
+
+  it.runIf(process.platform !== "win32")(
+    "keeps the generated validator CLI executable",
+    async () => {
+      const metadata = await stat(
+        `${pluginRoot}runtime/artifact-validator/cli.js`,
+      );
+      expect(metadata.mode & 0o111).toBe(0o111);
+    },
+  );
 });
 
 async function readJson(path: string): Promise<unknown> {

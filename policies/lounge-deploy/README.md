@@ -32,6 +32,15 @@ history/<version>.md        같은 버전의 불변 가이드 스냅샷
 4. `current.json`의 `version`과 `activatedAt`을 갱신한다.
 5. `framework-guide.md`를 활성 가이드로 교체한다.
 6. `pnpm check`로 계약과 참조 무결성을 확인한다.
+7. `pnpm verify:policy-change -- --base <base-sha>`로 과거 history 불변성과 원자적 활성화를
+   확인하고 CODEOWNER 승인을 받는다.
+8. main 병합 후 staging에서 같은 revision을 검증하고 production Environment 승인으로
+   traffic 없는 production deployment를 promote한다.
+
+긴급 정책과 rollback도 과거 history를 수정하지 않고 새 version으로 발행한다. actor,
+UTC 시각, 사유, 영향, rollback 대상을 기록하고 다음 영업일 안에 회귀 fixture와 사후
+승인을 완료한다. 상세 절차는
+[`policy-release-runbook.md`](../../docs/operations/policy-release-runbook.md)를 따른다.
 
 정책 값의 의미와 계약 규칙은
 [@letscoding/policy-contract](../../packages/policy-contract/README.md)에 있다.

@@ -9,6 +9,8 @@
 - `GET /health`: process/environment/revision 확인
 - `GET /ready`: 배포 revision과 정책 bundle probe 확인
 
+Vercel의 `/api/*` Functions는 `vercel.json` rewrite로 위 canonical 경로에 노출한다.
+
 MCP transport는 요청마다 새 server/transport를 만들고 응답 뒤 닫는다. 프로세스
 메모리 session에 의존하지 않으며 `GET`/`DELETE /mcp`는 405다.
 
@@ -92,3 +94,8 @@ corepack pnpm --filter @letscoding/lounge-deploy-mcp build
 Vercel project root는 `apps/lounge-deploy-mcp`로 설정한다. `vercel.json`이 `icn1`,
 함수 duration/memory를 고정하고 `api/mcp.ts`, `api/health.ts`, `api/ready.ts`가 각
 endpoint를 제공한다.
+
+실제 배포는 repository `Deploy Lounge Deploy MCP` workflow만 사용한다. main의 full SHA를
+staging에서 smoke한 뒤 production Environment 승인 후 `--skip-domain` candidate를 다시
+smoke하고 같은 deployment를 promote한다. 환경 설정, 경보와 rollback은
+[`docs/operations`](../../docs/operations/README.md)를 따른다.
