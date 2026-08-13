@@ -54,7 +54,11 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
-  packages/artifact-validator: {}
+  packages/artifact-validator:
+    dependencies:
+      '@letscoding/policy-contract':
+        specifier: workspace:*
+        version: link:../policy-contract
 
   packages/audit-log: {}
 

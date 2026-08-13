@@ -63,8 +63,9 @@ tests/fixtures/               공용 테스트 fixture
 - 소비자는 패키지 루트만 import한다. `exports`가 선언하지 않은 deep import는 허용하지 않는다.
 - 빌드는 ESM JavaScript, source map, TypeScript 선언과 declaration map을 `dist/`에 생성한다.
 
-`packages/policy-contract`는 정책 Schema·타입·버전 규칙·오류 코드 계약을 제공한다. 자세한 규칙은 [패키지 README](packages/policy-contract/README.md)에 있다. 나머지 workspace의 소스는 후속 기능 이슈를 위한 빈 공개 entry point와 smoke test만 포함한다. artifact 검증, MCP 인증과 Plugin 동작은 아직 구현하지 않았다.
+`packages/policy-contract`는 정책 Schema·타입·버전 규칙·오류 코드 계약을 제공한다. 자세한 규칙은 [패키지 README](packages/policy-contract/README.md)에 있다.
 
-`apps/lounge-deploy-mcp`는 공식 MCP SDK의 stateless Streamable HTTP transport와
-네 public 도구의 runtime 입출력 계약, 공통 오류 envelope, health/readiness 및
-Vercel `icn1` adapter를 제공한다. 도구별 domain 로직은 후속 이슈에서 연결한다.
+`packages/artifact-validator`는 manifest 결정적 검증과 Node.js용 ZIP·출력 폴더
+검사 API/CLI를 제공한다. ZIP byte와 파일 내용을 결과에 복사하지 않으며 stream
+inflate 제한, CRC/SHA-256, symlink 차단을 적용한다. MCP 인증과 Plugin 동작은
+후속 이슈에서 구현한다.

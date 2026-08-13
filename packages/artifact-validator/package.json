@@ -8,7 +8,18 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
+    },
+    "./fixtures": {
+      "types": "./dist/fixture-generator.d.ts",
+      "import": "./dist/fixture-generator.js"
     }
+  },
+  "bin": {
+    "lounge-artifact-validate": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,9 +31,13 @@
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint src --max-warnings=0",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "fixtures:generate": "node ./dist/generate-fixtures-cli.js"
   },
   "engines": {
     "node": ">=24 <25"
+  },
+  "dependencies": {
+    "@letscoding/policy-contract": "workspace:*"
   }
 }
