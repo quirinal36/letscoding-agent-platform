@@ -1,4 +1,5 @@
 import { constants as fsConstants } from "node:fs";
+import { setMaxListeners } from "node:events";
 import { lstat, open, readdir, realpath, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { join, relative, resolve, sep } from "node:path";
@@ -71,6 +72,13 @@ async function inspectZip(options) {
         return validatedResult(options, manifest, null, null);
     }
     const handle = await open(absolutePath, "r");
+    // Each bounded entry stream listens for the shared handle closing. Match the
+    // listener ceiling to the policy file limit so normal multi-file ZIPs do not
+    // emit a misleading EventEmitter leak warning.
+    // Node FileHandle emits `close`, although its public TypeScript shape does
+    // not currently extend EventTarget/EventEmitter.
+    const eventTargetHandle = handle;
+    setMaxListeners(Math.max(10, options.policy.limits.maxFiles + 1), eventTargetHandle);
     try {
         const directory = await readZipDirectory(handle, compressedBytes, options.policy.limits.maxEntries ?? options.policy.limits.maxFiles);
         let actualTotal = 0;

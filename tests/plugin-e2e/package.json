@@ -1,0 +1,23 @@
+{
+  "name": "@letscoding/plugin-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@letscoding/artifact-validator": "workspace:*",
+    "@letscoding/lounge-deploy-mcp": "workspace:*",
+    "@letscoding/policy-contract": "workspace:*",
+    "@letscoding/project-analyzer": "workspace:*",
+    "next": "16.2.12",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "vite": "8.1.5"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  }
+}

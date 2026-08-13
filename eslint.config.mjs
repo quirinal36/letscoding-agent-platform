@@ -24,6 +24,14 @@ export default tseslint.config(
     },
   },
   {
+    files: ["tests/plugin-e2e/fixtures/**/*.js"],
+    languageOptions: {
+      globals: {
+        document: "readonly",
+      },
+    },
+  },
+  {
     files: ["**/*.ts"],
     rules: {
       "@typescript-eslint/consistent-type-imports": "error",

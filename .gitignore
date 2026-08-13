@@ -27,3 +27,4 @@ yarn-error.log*
 .idea/
 .vscode/
 tests/fixtures/artifacts/generated/
+tests/plugin-e2e/.tmp-e2e-*/
