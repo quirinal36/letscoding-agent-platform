@@ -1,16 +1,31 @@
 # 외부 운영 설정 승인·되돌리기
 
-상태: 코드 권장안 구현됨, 외부 설정은 Product/Infrastructure Owner 승인 대기
+상태: 1인 운영 출시 승인됨, 외부 설정 적용 대기
+
+## 1인 운영 결정
+
+2026-08-13 Product Owner는 첫 출시를 1인 운영으로 진행하기로 결정했다. 두 번째
+operator가 없는 동안 자기 승인을 요구하는 보호 규칙은 출시를 영구 차단하므로 다음
+보완 통제를 사용한다.
+
+- 모든 변경은 PR로 제출하고 필수 CI와 conversation resolution을 통과한다.
+- PR 승인 수와 Code Owner review 요구는 `0`으로 둔다. 두 번째 operator 지정 시 `1`로
+  올리고 최신 push 이후 재승인을 요구한다.
+- production Environment required reviewer는 두지 않는다. 수동 workflow dispatch에
+  대상 full SHA, 정책 version, 변경 사유와 rollback 대상을 기록한 행위를 운영 승인으로
+  본다.
+- staging과 traffic 없는 production candidate를 같은 SHA로 smoke한 뒤에만 promote한다.
+- emergency bypass도 직접 push 대신 공개 PR·전체 CI·사후 기록을 유지한다.
 
 ## 권장 GitHub 설정
 
-- `main` ruleset: PR 필수, Code Owner review, conversation resolution, 최신 commit 승인,
+- `main` ruleset: PR 필수, 승인 수 0, conversation resolution,
   `Node 24 / macos-latest`, `ubuntu-latest`, `windows-latest`, `Dependency audit / high+` 필수,
   force push/delete/bypass 금지
 - merge queue를 쓰면 `merge_group` CI 유지
 - `staging` Environment: main만 배포, staging 전용 Vercel secret/variables
-- `production` Environment: required reviewer, main만, bypass 금지. 1인 운영에서는 self-review
-  방지가 release를 영구 차단하므로 두 번째 operator를 추가한 시점에 활성화
+- `production` Environment: main만 허용하고 required reviewer는 두지 않는다. 두 번째
+  operator를 추가한 시점에 required reviewer와 self-review 방지를 함께 활성화
 - Private Vulnerability Reporting과 Dependabot alerts 활성화
 
 ruleset 적용 전 기존 main 접근권한과 CI check 이름을 캡처한다. 문제가 생기면 ruleset을

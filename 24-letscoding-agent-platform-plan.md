@@ -10,6 +10,20 @@
 
 Skill과 Plugin만 배포하면 사용자의 설치본이 오래될 수 있다. 반대로 작업 시작과 최종 ZIP 검증 때 원격 MCP에서 정책을 조회하면, 운영자가 중앙 정책을 수정한 다음 작업부터 새 규칙이 적용된다.
 
+## 구현 상태 — 2026-08-13
+
+- GitHub 이슈 #1~#16과 구현 PR #18~#33이 모두 `main`에 병합되었다.
+- 정책 계약·검증기, 네 MCP 도구, 익명 접근 경계·남용 통제·감사 로그, Plugin/Skill,
+  clean-room E2E, CI/CD와 운영 runbook의 저장소 구현이 완료되었다.
+- 자동 clean-room E2E는 단일 HTML, 순수 HTML/CSS/JS, Vite, Next.js와 실패·정책 전환
+  시나리오를 검증한다.
+- 첫 출시는 1인 운영으로 승인되었다. 두 번째 operator가 생기기 전에는 PR 승인 수와
+  production required reviewer를 0으로 두고 필수 CI·수동 SHA dispatch·staging 및
+  traffic 없는 production candidate smoke를 보완 통제로 사용한다.
+- [로드맵 이슈 #17](https://github.com/quirinal36/letscoding-agent-platform/issues/17)은
+  외부 인프라 설정, production drill, 공개 Plugin 등록과 별도 실제 Codex 계정 UI 인수
+  확인이 끝날 때까지 출시 추적용으로 열어 둔다.
+
 ## 1차 범위
 
 - Codex용 **Lounge Deploy Plugin** 배포
@@ -42,6 +56,7 @@ letscoding-agent-platform/
 ├─ packages/
 │  ├─ policy-contract/             # JSON Schema, 타입, 버전 규칙
 │  ├─ artifact-validator/          # ZIP·출력 폴더 결정적 검증기
+│  ├─ project-analyzer/            # 프레임워크·정적 배포 호환성 분석기
 │  ├─ mcp-auth/                    # 인증·권한 확인 공통 모듈
 │  └─ audit-log/                   # 감사 로그 공통 모듈
 ├─ policies/
@@ -51,7 +66,11 @@ letscoding-agent-platform/
 │     └─ history/                  # 정책 버전별 스냅샷
 ├─ tests/
 │  ├─ policy-contract/
+│  ├─ plugin-e2e/
+│  ├─ operations/
 │  └─ fixtures/
+├─ docs/
+│  └─ operations/                  # 배포·정책 발행·장애·관측성 runbook
 └─ README.md
 ~~~
 
@@ -163,7 +182,7 @@ Skill에는 “MCP에서 정책을 조회하고, 최종 ZIP을 다시 검사하�
 설치 문서에는 다음만 제공한다.
 
 1. Plugin 설치 링크 또는 조직용 배포 방법
-2. MCP 로그인·연결 절차
+2. MCP 연결 확인 절차(1차 public MCP는 익명이며 로그인을 요구하지 않음)
 3. 예시 요청: “이 프로젝트를 라운지 작품 업로드용 ZIP으로 만들어줘”
 4. 자동 업로드는 사용자의 명시 승인 없이 실행되지 않는다는 설명
 
@@ -171,16 +190,20 @@ Skill에는 “MCP에서 정책을 조회하고, 최종 ZIP을 다시 검사하�
 
 ### 최소 권한
 
-- 정책 조회·정적 ZIP 검사: 로그인한 일반 사용자
-- 조직 전용 정책: 해당 조직 구성원
+- 1차 public 정책 조회·분석·정적 ZIP 검사·보고: 익명 caller
+- 조직 전용 정책: 향후 인증 ADR을 승인한 뒤 해당 조직 구성원
 - 정책 편집·활성화: 렛츠코딩 플랫폼 운영자
 - 실제 라운지 업로드: 작품 소유자 또는 권한 있는 담당 교사
 
 ### 서버 측 권한 확인
 
-MCP는 신뢰할 수 없는 클라이언트가 보낸 조직 ID, 사용자 ID, 작품 ID를 그대로 신뢰하지 않는다. 인증된 주체와 서버 측 권한 조회로 접근 범위를 판정한다.
+1차 MCP는 bearer token과 클라이언트가 보낸 조직 ID, 사용자 ID, 역할·scope를 권한 근거로
+받지 않고 거부한다. 네 public 읽기·분석·검증·보고 도구만 allowlist하며 정책 편집과 외부
+write는 배포 경계 밖에 둔다.
 
-정책 편집 API와 일반 MCP 호출 API는 분리한다. 토큰에는 사용자 ID, 조직 ID, 역할, 만료 시각, 허용된 MCP 범위를 제한적으로 담는다.
+향후 조직 전용 정책, 저장 보고서, ZIP 업로드 또는 실제 작품 write를 추가할 때에는 새 인증
+ADR을 먼저 승인하고, 정책 편집 API와 일반 MCP를 분리한 뒤 인증된 주체와 서버 측 권한
+조회로 접근 범위를 판정한다.
 
 ### 감사 로그
 
@@ -236,7 +259,7 @@ MCP는 신뢰할 수 없는 클라이언트가 보낸 조직 ID, 사용자 ID, �
 - 인증, 요청 제한, 구조화 감사 로그 구현
 - 최종 검증은 항상 서버의 활성 정책 버전으로 수행
 
-완료 기준: 서로 다른 테스트 계정이 같은 최신 정책을 받고, 정책 업데이트 후 새 요청이 변경된 버전을 반환한다.
+완료 기준: 서로 다른 익명 client가 같은 최신 정책을 받고, 정책 업데이트 후 새 요청이 변경된 버전을 반환한다.
 
 ### 단계 3 — Codex Plugin
 
@@ -263,21 +286,31 @@ MCP는 신뢰할 수 없는 클라이언트가 보낸 조직 ID, 사용자 ID, �
 | Fixture | Next.js·Vite·순수 HTML 정상/실패 ZIP |
 | 통합 | 정책 활성화 → MCP 조회 → 결과에 같은 버전 기록 |
 | Plugin E2E | 새 계정 설치 → 분석 → 빌드 → ZIP 통과/실패 보고 |
-| 보안 | 타 조직 정책 수정·타 사용자 업로드·민감값 로그 노출 차단 |
+| 보안 | public 도구 allowlist, client identity 거부, 민감값 로그 노출 차단 |
 
 정책 변경이 “다음 작업부터 적용”되는지 반드시 테스트한다. 시작 정책과 최종 검증 정책이 달라졌다면, 새 정책으로 한 번 더 검사해야 한다.
 
 ## 운영 체크리스트
 
-- [ ] 정책마다 소유자·승인자·변경 사유가 있다.
-- [ ] 정책 JSON과 Markdown 가이드를 같은 PR에서 갱신한다.
-- [ ] 정책 버전은 롤백 가능하고 과거 실행을 재현할 수 있다.
-- [ ] Plugin은 세부 정책을 하드코딩하지 않는다.
-- [ ] 최종 ZIP 통과 여부는 결정적 검증기가 판단한다.
-- [ ] 사용자별 인증과 조직 범위 검증이 있다.
-- [ ] 민감값·소스·ZIP 원문이 기본 감사 로그에 남지 않는다.
-- [ ] 자동 업로드에는 사용자 확인과 최소 권한이 있다.
-- [ ] 정책 서비스 장애 시 오래된 정책으로 성공 처리하지 않는다.
+- [x] 정책마다 소유자·승인자·변경 사유가 있다.
+- [x] 정책 JSON과 Markdown 가이드를 같은 PR에서 갱신한다.
+- [x] 정책 버전은 롤백 가능하고 과거 실행을 재현할 수 있다.
+- [x] Plugin은 세부 정책을 하드코딩하지 않는다.
+- [x] 최종 ZIP 통과 여부는 결정적 검증기가 판단한다.
+- [x] 1차 public MCP는 익명 최소 권한이며 client identity를 거부한다. 사용자·조직 권한은
+  외부 write 또는 조직 전용 기능을 설계할 때 새 인증 ADR과 함께 구현한다.
+- [x] 민감값·소스·ZIP 원문이 기본 감사 로그에 남지 않는다.
+- [x] 자동 업로드는 1차 비범위이며 public 도구 allowlist에 존재하지 않는다.
+- [x] 정책 서비스 장애 시 오래된 정책으로 성공 처리하지 않는다.
+
+### 출시 전 사람·외부 운영 게이트
+
+- [ ] 승인된 1인 운영안대로 GitHub `main` ruleset과 staging/production Environment 보호
+  규칙 적용
+- [ ] Vercel staging/prod, DNS/TLS, 환경별 secret, WAF, audit sink/RBAC·경보 설정
+- [ ] staging→production 승격, canonical smoke, rollback, WAF·audit sink 실제 drill
+- [ ] prod MCP의 ChatGPT 기술 ID 발급과 공개 Plugin metadata·지원 책임자 승인
+- [ ] 저장소를 clone하지 않은 별도 Codex 계정·컴퓨터의 Plugin UI 인수 확인
 
 ## 첫 이슈 목록
 
@@ -299,3 +332,6 @@ MCP는 신뢰할 수 없는 클라이언트가 보낸 조직 ID, 사용자 ID, �
 5. 검증기가 백슬래시 ZIP, .env 포함 ZIP, 루트 절대 자산 경로 문제를 감지한다.
 6. 통과한 경우에만 ZIP 절대 경로·크기·파일 수·정책 버전·제한사항을 보고한다.
 7. 운영자가 정책을 수정한 뒤 새 요청을 시작하면, Plugin 업데이트 없이 새 정책이 적용된다.
+
+자동 clean-room E2E는 2~7을 검증했다. 1과 실제 Codex UI에서의 2는 Product Owner가
+production revision으로 수행할 출시 인수 확인에 남아 있다.
