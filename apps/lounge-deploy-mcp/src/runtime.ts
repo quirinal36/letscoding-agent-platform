@@ -1,5 +1,6 @@
 import { createLoungeDeployHttpHandler } from "./http.js";
 import { loadMcpConfig } from "./config.js";
+import { createValidateArtifactHandler } from "./artifact-validation.js";
 import { createBundledPolicySource } from "./bundled-policy-source.js";
 import {
   createGetPolicyHandler,
@@ -17,6 +18,7 @@ export const loungeDeployHttpHandler = createLoungeDeployHttpHandler({
   config: loadMcpConfig(),
   handlers: {
     get_policy: getPolicy,
+    validate_artifact: createValidateArtifactHandler({ getPolicy }),
     analyze_project: createAnalyzeProjectHandler({ getPolicy }),
   },
   readinessProbes: [

@@ -37,6 +37,8 @@ export type ArtifactKind = "directory" | "zip";
 export interface ArtifactValidationRule {
   readonly code: string;
   readonly severity: ArtifactValidationSeverity;
+  /** Warning findings are waivable unless policy explicitly forbids it. */
+  readonly waivable?: boolean;
   /**
    * A static, user-facing message. Manifest data is deliberately never
    * interpolated into this value by the validator.
@@ -193,6 +195,7 @@ export interface ArtifactValidationResult {
 
 interface PendingFinding extends ArtifactValidationFinding {
   readonly sequence: number;
+  readonly waivable: boolean;
 }
 
 interface IndexedFile {
@@ -231,6 +234,7 @@ export function validateArtifact(
       message: rule.message,
       fileIndexes: [...fileIndexes].sort(compareNumbers),
       sequence,
+      waivable: rule.severity === "warning" && rule.waivable !== false,
     });
     sequence += 1;
   };
@@ -594,9 +598,11 @@ function applyWarningWaivers(
   readonly applied: readonly AppliedWarningWaiver[];
 } {
   const warningCountByCode = new Map<string, number>();
+  const nonWaivableWarningCodes = new Set<string>();
   const errorCodes = new Set<string>();
   for (const finding of findings) {
     if (finding.severity === "warning") {
+      if (!finding.waivable) nonWaivableWarningCodes.add(finding.code);
       warningCountByCode.set(
         finding.code,
         (warningCountByCode.get(finding.code) ?? 0) + 1,
@@ -637,7 +643,12 @@ function applyWarningWaivers(
   );
   for (const [code, waivers] of sortedCandidates) {
     const warningCount = warningCountByCode.get(code) ?? 0;
-    if (waivers.length !== 1 || warningCount === 0 || errorCodes.has(code)) {
+    if (
+      waivers.length !== 1 ||
+      warningCount === 0 ||
+      errorCodes.has(code) ||
+      nonWaivableWarningCodes.has(code)
+    ) {
       addFinding("warning-waiver-invalid");
       continue;
     }

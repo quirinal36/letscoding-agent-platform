@@ -383,6 +383,35 @@ describe("validateArtifact", () => {
     ]);
   });
 
+  it("does not waive a warning that policy marks non-waivable", () => {
+    const warningPolicy: ArtifactValidationPolicy = {
+      ...policy,
+      rules: {
+        ...policy.rules,
+        "extension-not-allowed": {
+          code: "EXTENSION_REVIEW",
+          severity: "warning",
+          waivable: false,
+          message: "Review this extension.",
+        },
+      },
+    };
+    const result = validateArtifact({
+      policy: warningPolicy,
+      manifest: manifest([file("index.html"), file("asset.bin")]),
+      warningWaivers: [
+        { code: "EXTENSION_REVIEW", reason: "Tried to approve." },
+      ],
+    });
+
+    expect(result.pass).toBe(false);
+    expect(result.warningWaivers).toEqual([]);
+    expect(result.warnings[0]?.waived).toBe(false);
+    expect(result.errors.map(({ ruleId }) => ruleId)).toContain(
+      "warning-waiver-invalid",
+    );
+  });
+
   it("does not apply empty, duplicate, unknown, or error-code waivers", () => {
     const warningPolicy: ArtifactValidationPolicy = {
       ...policy,

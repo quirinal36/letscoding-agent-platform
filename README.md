@@ -65,6 +65,10 @@ tests/fixtures/               공용 테스트 fixture
 
 `packages/policy-contract`는 정책 Schema·타입·버전 규칙·오류 코드 계약을 제공한다. 자세한 규칙은 [패키지 README](packages/policy-contract/README.md)에 있다.
 
+`apps/lounge-deploy-mcp`는 공식 MCP SDK의 stateless Streamable HTTP transport와
+네 public 도구의 runtime 입출력 계약, 공통 오류 envelope, health/readiness 및
+Vercel `icn1` adapter를 제공한다. 도구별 domain 로직은 후속 이슈에서 연결한다.
+
 `packages/artifact-validator`는 manifest 결정적 검증과 Node.js용 ZIP·출력 폴더
 검사 API/CLI를 제공한다. ZIP byte와 파일 내용을 결과에 복사하지 않으며 stream
 inflate 제한, CRC/SHA-256, symlink 차단을 적용한다. MCP 인증과 Plugin 동작은
