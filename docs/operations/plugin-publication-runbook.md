@@ -27,21 +27,21 @@ deployment 증빙이 생기기 전에는 MCP Scan과 domain verification을 완�
 
 ## 제출 자료
 
-| Portal 항목 | 값 또는 원본 | 상태 |
-| --- | --- | --- |
-| 제출 유형 | `With MCP` — Skill과 MCP 결합 | 준비됨 |
-| Plugin 이름 | `Lounge Deploy` | 준비됨 |
-| Category | `Developer Tools` | 준비됨 |
-| Website | `https://github.com/quirinal36/letscoding-agent-platform` | 공개 확인됨 |
-| Support | `https://github.com/quirinal36/letscoding-agent-platform/blob/main/SUPPORT.md` | 준비됨 |
-| Privacy | `https://github.com/quirinal36/letscoding-agent-platform/blob/main/PRIVACY.md` | 준비됨 |
-| Terms | `https://github.com/quirinal36/letscoding-agent-platform/blob/main/TERMS.md` | 준비됨 |
-| MCP URL type | `Universal` | 준비됨 |
-| MCP URL | `https://lounge-deploy-mcp.letscoding.kr/mcp` | DNS/deploy 대기 |
-| Authentication | 없음 — 익명 public read/analyze/validate/report | 준비됨 |
-| Logo | Product Owner가 승인한 production asset | 미준비 |
-| Developer Identity | OpenAI Platform에서 검증된 개인/사업자 | 확인 필요 |
-| Availability | Product Owner가 승인한 국가 목록 | 미결정 |
+| Portal 항목        | 값 또는 원본                                                                   | 상태            |
+| ------------------ | ------------------------------------------------------------------------------ | --------------- |
+| 제출 유형          | `With MCP` — Skill과 MCP 결합                                                  | 준비됨          |
+| Plugin 이름        | `Lounge Deploy`                                                                | 준비됨          |
+| Category           | `Developer Tools`                                                              | 준비됨          |
+| Website            | `https://github.com/quirinal36/letscoding-agent-platform`                      | 공개 확인됨     |
+| Support            | `https://github.com/quirinal36/letscoding-agent-platform/blob/main/SUPPORT.md` | 준비됨          |
+| Privacy            | `https://github.com/quirinal36/letscoding-agent-platform/blob/main/PRIVACY.md` | 준비됨          |
+| Terms              | `https://github.com/quirinal36/letscoding-agent-platform/blob/main/TERMS.md`   | 준비됨          |
+| MCP URL type       | `Universal`                                                                    | 준비됨          |
+| MCP URL            | `https://lounge-deploy-mcp.letscoding.kr/mcp`                                  | DNS/deploy 대기 |
+| Authentication     | 없음 — 익명 public read/analyze/validate/report                                | 준비됨          |
+| Logo               | Product Owner가 승인한 production asset                                        | 미준비          |
+| Developer Identity | OpenAI Platform에서 검증된 개인/사업자                                         | 확인 필요       |
+| Availability       | Product Owner가 승인한 국가 목록                                               | 미결정          |
 
 짧은 설명:
 
