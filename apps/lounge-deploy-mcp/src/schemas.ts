@@ -629,10 +629,6 @@ export const createReportInputSchema = z
           )
           .max(100)
           .optional(),
-        runtimeEnvNames: z
-          .array(z.string().regex(/^[A-Z][A-Z0-9_]*$/))
-          .max(100)
-          .optional(),
         remainingLimitations: z.array(reportTextSchema).max(100).optional(),
       })
       .strict()
@@ -780,7 +776,6 @@ export const reportJsonSchema = z
         })
         .strict(),
     ),
-    runtimeEnvNames: z.array(z.string()),
     remainingLimitations: z.array(z.string()),
   })
   .strict();

@@ -789,7 +789,9 @@ function analyzeCrossCutting(
         "recommendation",
         "build-time 환경변수 참조가 있습니다.",
         [file.normalizedPath],
-        `배포본은 ${policy.runtimeEnv.browserObject}의 공개값을 우선 읽는 어댑터를 사용하세요.`,
+        policy.runtimeEnv.attachSeparately
+          ? `배포본은 ${policy.runtimeEnv.browserObject}의 공개값을 우선 읽는 어댑터를 사용하세요.`
+          : ".env 또는 브라우저 runtime env를 배포에 사용하지 마세요. secret이 필요한 기능은 인증된 server-side backend로 분리하세요.",
       );
     }
     if (/https?:\/\//.test(content)) {
@@ -842,7 +844,9 @@ function createChecklist(
     {
       id: "runtime-env",
       required: true,
-      text: `${policy.runtimeEnv.attachmentFilename ?? ".env"}는 ZIP과 분리하고 공개값은 ${policy.runtimeEnv.browserObject}에서 읽는다.`,
+      text: policy.runtimeEnv.attachSeparately
+        ? `${policy.runtimeEnv.attachmentFilename ?? ".env"}는 ZIP과 분리하고 공개값은 ${policy.runtimeEnv.browserObject}에서 읽는다.`
+        : ".env, browser runtime env, secret은 ZIP·MCP·보고서에 넣지 않고 server-side 관리 경로로 분리한다.",
     },
     {
       id: "validate-final-policy",

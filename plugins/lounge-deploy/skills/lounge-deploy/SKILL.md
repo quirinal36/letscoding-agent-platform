@@ -48,8 +48,9 @@ work was uploaded to Lounge.
    version.
 8. Call `create_report` with the matching analysis and final validation results,
    changed files and reasons, commands in execution order, output directory,
-   absolute ZIP path, verified features, external origins, public runtime env
-   names only, and remaining limitations. Return its Korean Markdown report.
+   absolute ZIP path, verified features, external origins, and remaining
+   limitations. Do not pass runtime environment variable names or values. Return
+   its Korean Markdown report.
 
 ## Optional Lounge ranking integration
 
@@ -122,8 +123,10 @@ without that request.
 - Derive size limits, allowed extensions and names, path rules, framework
   settings, runtime environment guidance, warning behavior, and error meanings
   only from the current MCP policy and guide. Do not hardcode or guess them.
-- Keep `.env` and all runtime values outside the ZIP. Report public environment
-  variable names only when the policy requests them; never report values.
+- Do not accept, package, transmit, or report a work's `.env`, runtime
+  environment variable names, or values. A feature requiring a secret must use
+  Lounge's authenticated server-side secret management; state it as a remaining
+  limitation when that service is unavailable.
 - Do not disable lint, type checking, tests, or security checks to obtain a pass.
 - Do not remove unrelated files or perform destructive source-control commands.
 - Do not upload, register, publish, or make the Lounge work public. The result is

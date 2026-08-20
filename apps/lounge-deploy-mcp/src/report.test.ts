@@ -12,7 +12,7 @@ import { createAnalyzeProjectHandler } from "./project-analysis.js";
 import { createReport } from "./report.js";
 import { createReportInputSchema, type CreateReportInput } from "./schemas.js";
 
-const VERSION = "2026-08-12.2";
+const VERSION = "2026-08-20.1";
 const FILE_HASH = "a".repeat(64);
 const ARTIFACT_HASH = "b".repeat(64);
 const context = {
@@ -95,7 +95,6 @@ beforeAll(async () => {
           purpose: "점수 조회",
         },
       ],
-      runtimeEnvNames: ["PUBLIC_API_URL"],
       remainingLimitations: ["CSP 허용 여부를 실제 라운지에서 확인"],
     },
   });
@@ -119,7 +118,7 @@ describe("create_report", () => {
           "findingCodes": [],
           "pass": true,
           "requiredChecklist": [
-            ".env는 ZIP과 분리하고 공개값은 window.__LETS_RUNTIME_ENV__에서 읽는다.",
+            ".env, browser runtime env, secret은 ZIP·MCP·보고서에 넣지 않고 server-side 관리 경로로 분리한다.",
             "ZIP 직전에 정책을 다시 조회하고 최종 활성 version으로 검증한다.",
             "소스 트리가 아니라 정적 출력물 내용만 패키징한다.",
             "작업 시작 전에 활성 정책을 조회하고 version을 기록한다.",
@@ -144,9 +143,9 @@ describe("create_report", () => {
         },
         "pass": true,
         "policy": {
-          "analysisVersion": "2026-08-12.2",
+          "analysisVersion": "2026-08-20.1",
           "id": "lounge-deploy",
-          "version": "2026-08-12.2",
+          "version": "2026-08-20.1",
         },
         "status": "completed",
         "validation": {
@@ -162,7 +161,7 @@ describe("create_report", () => {
         "",
         "- 상태: **완료**",
         "- 통과: **예**",
-        "- 정책: \`lounge-deploy\` / \`2026-08-12.2\`",
+        "- 정책: \`lounge-deploy\` / \`2026-08-20.1\`",
         "- 검증 결정: \`PASS\`",
         "",
         "## 프로젝트",
@@ -172,7 +171,7 @@ describe("create_report", () => {
         "- 감지 신뢰도: \`high\`",
         "- 분석 통과: **예**",
         "- 분석 발견 코드: \`없음\`",
-        "- \\.env는 ZIP과 분리하고 공개값은 window\\.\\_\\_LETS\\_RUNTIME\\_ENV\\_\\_에서 읽는다\\.",
+        "- \\.env, browser runtime env, secret은 ZIP·MCP·보고서에 넣지 않고 server\\-side 관리 경로로 분리한다\\.",
         "- ZIP 직전에 정책을 다시 조회하고 최종 활성 version으로 검증한다\\.",
         "- 소스 트리가 아니라 정적 출력물 내용만 패키징한다\\.",
         "- 작업 시작 전에 활성 정책을 조회하고 version을 기록한다\\.",

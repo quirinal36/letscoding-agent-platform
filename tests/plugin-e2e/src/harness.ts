@@ -170,7 +170,6 @@ export async function runJourney(
         zipPath,
         verifiedFeatures: [`${scenario.fixture} 정적 산출물 build 및 구조`],
         externalOrigins: [],
-        runtimeEnvNames: [],
         remainingLimitations: ["실제 Lounge 등록·공개는 수행하지 않음"],
       },
     });

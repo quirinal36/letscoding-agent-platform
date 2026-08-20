@@ -31,12 +31,12 @@ beforeAll(async () => {
 });
 
 describe("Lounge 구현에서 이관한 활성 정책", () => {
-  it("2026-08-12.2의 발행 책임과 원본을 고정한다", () => {
-    expect(policy.version).toBe("2026-08-12.2");
+  it("2026-08-20.1의 발행 책임과 원본을 고정한다", () => {
+    expect(policy.version).toBe("2026-08-20.1");
     expect(policy.governance).toEqual({
       owner: "@quirinal36",
       approver: "@quirinal36",
-      publishedAt: "2026-08-12T14:08:37Z",
+      publishedAt: "2026-08-20T00:00:00Z",
     });
     expect(policy.source).toMatchObject({
       repository: "https://github.com/yudanah/letscoding_lounge",
@@ -119,7 +119,7 @@ describe("Lounge 구현에서 이관한 활성 정책", () => {
     ]);
   });
 
-  it("단일 HTML, Vite, Next.js와 공개 런타임 설정을 표현한다", () => {
+  it("단일 HTML, Vite, Next.js와 비밀값 분리 정책을 표현한다", () => {
     const frameworks = Object.fromEntries(
       policy.frameworks.map((framework) => [framework.key, framework]),
     );
@@ -137,14 +137,9 @@ describe("Lounge 구현에서 이관한 활성 정책", () => {
       expectedAssetPrefix: "./_next/",
     });
     expect(policy.runtimeEnv).toMatchObject({
-      attachSeparately: true,
-      attachmentFilename: ".env",
-      maxBytes: 64 * 1024,
-      maxKeys: 50,
-      keyPattern: "^[A-Z][A-Z0-9_]*$",
+      attachSeparately: false,
       browserObject: "window.__LETS_RUNTIME_ENV__",
       forbidBundledSecrets: true,
-      reservedGeneratedFilename: "runtime-config.js",
     });
   });
 
