@@ -11,6 +11,10 @@ describe("release contracts", () => {
       await read("apps/lounge-deploy-mcp/vercel.json"),
     ) as { rewrites: Array<{ source: string; destination: string }> };
     expect(config.rewrites).toEqual([
+      {
+        source: "/.well-known/openai-apps-challenge",
+        destination: "/api/openai-apps-challenge",
+      },
       { source: "/mcp", destination: "/api/mcp" },
       { source: "/health", destination: "/api/health" },
       { source: "/ready", destination: "/api/ready" },
