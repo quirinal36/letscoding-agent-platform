@@ -209,12 +209,15 @@ ADR을 먼저 승인하고, 정책 편집 API와 일반 MCP를 분리한 뒤 인
 
 기본 로그에는 다음만 기록한다.
 
-- 요청 시각, 사용자/조직 식별자, MCP 도구명
+- 요청 시각, request ID, 일일 회전 네트워크 가명키, 익명 actor, MCP 도구명
 - 정책 ID·버전
 - 검사 결과 코드, ZIP 크기·파일 수·해시
-- 실제 업로드가 있다면 대상 작품 ID와 사용자 확인 여부
 
 소스 코드, .env 값, ZIP 원문, 학생 개인정보, 비밀값은 기본 로그에 저장하지 않는다. 오류 메시지도 비밀값을 다시 출력하지 않게 한다.
+
+1차 MCP에는 실제 업로드가 없으므로 사용자·조직·작품 식별자를 수집하지 않는다.
+향후 실제 업로드를 추가할 때에는 새 인증 ADR과 별도의 actor·대상 작품 감사 계약을
+먼저 승인한다.
 
 ## Lounge Deploy의 결정적 검증
 
@@ -309,7 +312,7 @@ ADR을 먼저 승인하고, 정책 편집 API와 일반 MCP를 분리한 뒤 인
   규칙 적용
 - [ ] Vercel staging/prod, DNS/TLS, 환경별 secret, WAF, audit sink/RBAC·경보 설정
 - [ ] staging→production 승격, canonical smoke, rollback, WAF·audit sink 실제 drill
-- [ ] prod MCP의 ChatGPT 기술 ID 발급과 공개 Plugin metadata·지원 책임자 승인
+- [ ] OpenAI 게시 identity/권한 확인, prod MCP domain 검증과 공개 Plugin 제출 metadata·지원 책임자 승인
 - [ ] 저장소를 clone하지 않은 별도 Codex 계정·컴퓨터의 Plugin UI 인수 확인
 
 ## 첫 이슈 목록

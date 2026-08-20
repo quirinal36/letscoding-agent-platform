@@ -65,6 +65,32 @@ export function createLoungeDeployHttpHandler(
     response.setHeader("cache-control", "no-store");
     const path = new URL(request.url ?? "/", "http://localhost").pathname;
 
+    if (
+      path === "/.well-known/openai-apps-challenge" ||
+      path === "/api/openai-apps-challenge"
+    ) {
+      if (
+        request.method !== "GET" ||
+        options.config.openAiAppsChallenge === undefined
+      ) {
+        writeJson(response, request.method === "GET" ? 404 : 405, {
+          error: {
+            code:
+              request.method === "GET"
+                ? "HTTP_NOT_FOUND"
+                : "HTTP_METHOD_NOT_ALLOWED",
+            message:
+              request.method === "GET"
+                ? "Endpoint를 찾을 수 없습니다."
+                : "Method not allowed.",
+          },
+        });
+        return;
+      }
+      writeText(response, 200, options.config.openAiAppsChallenge);
+      return;
+    }
+
     if (path === "/health" || path === "/api/health") {
       writeJson(response, 200, {
         status: "ok",
@@ -331,4 +357,15 @@ function writeJson(
   response.setHeader("content-type", "application/json; charset=utf-8");
   response.setHeader("content-length", Buffer.byteLength(body));
   response.end(body);
+}
+
+function writeText(
+  response: ServerResponse,
+  status: number,
+  value: string,
+): void {
+  response.statusCode = status;
+  response.setHeader("content-type", "text/plain; charset=utf-8");
+  response.setHeader("content-length", Buffer.byteLength(value));
+  response.end(value);
 }

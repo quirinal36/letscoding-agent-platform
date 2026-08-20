@@ -48,12 +48,14 @@ deployment는 Vercel Instant Rollback을 사용한다.
 
 - `PRIVACY.md`, `TERMS.md`, `SUPPORT.md`, `SECURITY.md`의 main URL 확인
 - GitHub private vulnerability reporting 실제 제출 테스트
-- ChatGPT developer mode에서 prod MCP를 등록해 받은 `plugin_asdk_app...` ID 승인
+- OpenAI 게시 조직의 developer/business identity 검증과 `Apps Management: Write` 확인
+- Plugin Submission Portal에서 `With MCP` draft 생성 후 prod Universal MCP URL Scan Tools
+- portal이 발급한 domain token을 `LETS_OPENAI_APPS_CHALLENGE`로 설정하고 검증
 - 별도 새 Codex 계정/컴퓨터의 #15 UI 인수 확인
 
-기술 ID가 없으면 `.app.json`을 만들지 않는다. 공개 directory 제출을 되돌릴 때에는 새
-Plugin version을 unavailable 처리하고 MCP endpoint를 fail-closed로 유지하며, 기존 설치가
-stale 정책으로 성공하지 않는지 확인한다.
+developer-mode 기술 ID가 없으면 `.app.json`을 만들지 않는다. 공개 directory 제출을
+되돌릴 때에는 portal에서 새 Plugin version을 unavailable 처리하고 MCP endpoint를
+fail-closed로 유지하며, 기존 설치가 stale 정책으로 성공하지 않는지 확인한다.
 
 ## 코드 되돌리기
 

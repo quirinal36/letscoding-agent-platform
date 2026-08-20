@@ -8,6 +8,7 @@
 - `POST /mcp`: MCP Streamable HTTP(JSON response mode)
 - `GET /health`: process/environment/revision 확인
 - `GET /ready`: 배포 revision과 정책 bundle probe 확인
+- `GET /.well-known/openai-apps-challenge`: 공개 Plugin 도메인 검증 token
 
 Vercel의 `/api/*` Functions는 `vercel.json` rewrite로 위 canonical 경로에 노출한다.
 
@@ -25,6 +26,10 @@ MCP transport는 요청마다 새 server/transport를 만들고 응답 뒤 닫�
 envelope를 사용한다. unknown 입력 필드는 handler 실행 전에 거부된다. domain 오류는
 구조화된 tool error이며 JSON 파싱/transport 오류와 구분된다. `upload_to_lounge`는
 등록하지 않는다.
+
+도구는 사용자 프로젝트나 외부 공개 상태를 변경하지 않지만 호출마다 최소 감사
+event를 기록한다. OpenAI public review annotation 기준에 따라 `readOnlyHint=false`,
+`idempotentHint=false`, `destructiveHint=false`, `openWorldHint=false`로 선언한다.
 
 #9에서 `get_policy`를 발행된 정책 bundle에 연결했다. `current.json`을 한 번 읽어
 선택한 immutable JSON/Markdown snapshot을 함께 반환하며, 명시한 과거 버전도 조회할
@@ -70,7 +75,12 @@ corepack pnpm --filter @letscoding/lounge-deploy-mcp generate:policy-bundle
 | `LETS_RATE_LIMIT_MAX_REQUESTS` | `120`          | fixed window당 익명 네트워크 요청 수     |
 | `LETS_RATE_LIMIT_WINDOW_MS`    | `60000`        | 인스턴스 내 제한 window                  |
 | `LETS_MAX_CONCURRENT_REQUESTS` | `8`            | 인스턴스 내 동시 MCP 요청 수             |
+| `LETS_OPENAI_APPS_CHALLENGE`   | 없음           | OpenAI 공개 Plugin 도메인 검증 token     |
 | `PORT`                         | `3000`         | 로컬 Node HTTP port                      |
+
+도메인 challenge는 제출 portal이 발급한 정확한 token을 production secret으로 설정한
+경우에만 plain text로 노출한다. 미설정 환경은 404를 반환하며 token을 Git이나 문서에
+커밋하지 않는다.
 
 `staging`과 `prod`는 서로 다른 Vercel 프로젝트/환경 변수로 운영한다. readiness는
 비밀값이나 사용자 정보를 반환하지 않는다. 1차 public 도구는 ADR-0002에 따라

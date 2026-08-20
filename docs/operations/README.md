@@ -7,6 +7,7 @@
 - [장애·버전 불일치 대응](incident-runbook.md)
 - [관측성·감사 보존](observability.md)
 - [외부 설정 승인과 되돌리기](approvals-and-rollback.md)
+- [공개 Plugin 제출·게시](plugin-publication-runbook.md)
 - [2026-08-13 로컬 합성 drill](rehearsals/2026-08-13-local.md)
 
 모든 조사는 `revision`, policy ID/version, request ID를 먼저 기록한다. source, ZIP 원문,

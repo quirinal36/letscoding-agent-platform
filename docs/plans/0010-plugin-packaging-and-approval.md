@@ -23,12 +23,19 @@ dependency를 Plugin `runtime/`에 생성한다. Skill wrapper는 이 번들만 
 
 ## 사람이 승인해야 하는 항목
 
-### ChatGPT/public directory MCP 등록
+### ChatGPT/Codex public directory 제출
 
-OpenAI 공식 흐름상 ChatGPT developer mode에서 prod MCP URL을 먼저 등록하고
-`plugin_asdk_app...` 기술 ID를 발급받아야 한다. 임의 ID를 만들지 않는다. Product
-Owner가 #15 E2E와 #16 운영 gate를 승인한 뒤 `.app.json`과 manifest `apps` 필드를
-추가한다. 현재 `.mcp.json`은 Codex의 repository marketplace 설치·E2E를 담당한다.
+공개 등록은 OpenAI Platform의 Plugin Submission Portal에서 `With MCP` 유형으로 새
+제출을 만들고 production MCP URL을 직접 Scan Tools 한다. 이미 등록된 integration
+기술 ID를 공개 제출 입력으로 재사용하지 않는다. ChatGPT developer mode에서 발급되는
+`plugin_asdk_app...` 기술 ID는 `.app.json` 기반 로컬 개발 연결이 필요할 때만 사용하며
+임의 ID를 만들지 않는다. 현재 `.mcp.json`은 Codex repository marketplace 설치·E2E를
+담당한다.
+
+제출자는 게시 조직에서 `Apps Management: Write` 권한과 검증된 개인 또는 사업자
+identity를 가져야 한다. 공개 제출의 전체 절차와 증빙은
+[`docs/operations/plugin-publication-runbook.md`](../operations/plugin-publication-runbook.md)를
+따른다.
 
 ### 공개 제출 metadata와 지원 경계
 

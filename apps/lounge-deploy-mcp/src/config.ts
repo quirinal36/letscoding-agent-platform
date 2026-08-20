@@ -5,6 +5,7 @@ export type LoungeDeployEnvironment = "dev" | "test" | "staging" | "prod";
 export interface McpServiceConfig {
   readonly environment: LoungeDeployEnvironment;
   readonly revision: string;
+  readonly openAiAppsChallenge?: string;
   readonly port: number;
   readonly maxBodyBytes: number;
   readonly networkFingerprintSecret: string;
@@ -46,9 +47,24 @@ export function loadMcpConfig(
     selected === "dev" || selected === "test"
       ? "local-network-key-secret-not-for-production"
       : undefined;
+  const openAiAppsChallenge = z
+    .string()
+    .min(1)
+    .max(1_024)
+    .refine((value) => value === value.trim())
+    .refine(
+      (value) =>
+        ![...value].some((character) => {
+          const point = character.codePointAt(0);
+          return point !== undefined && (point <= 0x1f || point === 0x7f);
+        }),
+    )
+    .optional()
+    .parse(environment.LETS_OPENAI_APPS_CHALLENGE);
   return {
     environment: selected,
     revision,
+    ...(openAiAppsChallenge === undefined ? {} : { openAiAppsChallenge }),
     port: positiveIntegerText.max(65_535).parse(environment.PORT ?? "3000"),
     maxBodyBytes: positiveIntegerText
       .max(4 * 1024 * 1024)

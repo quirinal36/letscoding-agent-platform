@@ -72,12 +72,15 @@ tests/fixtures/               공용 테스트 fixture
 
 `apps/lounge-deploy-mcp`는 공식 MCP SDK의 stateless Streamable HTTP transport와
 네 public 도구의 runtime 입출력 계약, 공통 오류 envelope, health/readiness 및
-Vercel `icn1` adapter를 제공한다. 도구별 domain 로직은 후속 이슈에서 연결한다.
+Vercel `icn1` adapter를 제공한다. `get_policy`, `analyze_project`,
+`validate_artifact`, `create_report`는 각각 정책 저장소, 공용 분석기·검증기와 결정적
+보고서 생성기에 연결되어 있다.
 
 `packages/artifact-validator`는 manifest 결정적 검증과 Node.js용 ZIP·출력 폴더
 검사 API/CLI를 제공한다. ZIP byte와 파일 내용을 결과에 복사하지 않으며 stream
-inflate 제한, CRC/SHA-256, symlink 차단을 적용한다. MCP 인증과 Plugin 동작은
-후속 이슈에서 구현한다.
+inflate 제한, CRC/SHA-256, symlink 차단을 적용한다. 익명 MCP 접근 경계와 감사
+로그는 `packages/mcp-auth`, `packages/audit-log`에, 설치·실행 흐름은
+`plugins/lounge-deploy`에 구현되어 있다.
 
 운영 절차는 [운영 인덱스](docs/operations/README.md)에 있다. CI는 세 운영체제의 전체
 검사, high dependency audit, 정책 history 불변성, Plugin/비밀 검사와 revision별 source

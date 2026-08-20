@@ -49,12 +49,17 @@ OpenAI의 Plugin 인증 문서는 읽기 전용 MCP가 익명으로 동작할 �
 - route/tool별 body 크기, 파일 수, 문자열 길이, timeout과 concurrency 제한
 - IP/network 신호와 전체 service budget에 기반한 rate limit
 - CDN/WAF의 기본 bot·비정상 트래픽 차단
-- `get_policy`의 cache/ETag와 동일 요청 비용 절감
+- `get_policy`의 content hash/ETag를 이용한 client 측 동일 정책 판별과 중복 작업 절감
 - request ID, tool, policy version, 결과 code, latency, 크기/파일 수만 담는 최소 감사 event
 - token, email, user ID, source content, ZIP bytes와 `.env` 값을 수집하지 않음
 - 정상 Plugin의 작업 시작/최종 재검증 흐름을 차단하지 않는 부하·경계 테스트
 
 IP는 권한 identity가 아니며 장기 사용자 프로필을 만드는 데 사용하지 않는다. 저장이 필요하면 축약 또는 회전 salt 기반 pseudonymization과 짧은 보존 기간을 Issue #13에서 결정한다.
+
+현재 stateless MCP는 POST 응답에 `cache-control: no-store`를 적용한다. `etag`는
+`get_policy` 도구 데이터 안에서 정책 동일성을 판별하기 위한 값이며 HTTP 조건부
+캐시를 의미하지 않는다. HTTP/CDN 캐시를 도입하려면 MCP transport 의미와 정책 전환
+일관성을 별도로 설계하고 검증한다.
 
 ### 인증을 새로 도입해야 하는 조건
 

@@ -179,6 +179,12 @@ describe("MCP protocol scaffold", () => {
     for (const tool of tools.tools) {
       expect(tool.inputSchema.type).toBe("object");
       expect(tool.outputSchema?.type).toBe("object");
+      expect(tool.annotations).toMatchObject({
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      });
     }
   });
 
@@ -329,6 +335,32 @@ describe("MCP protocol scaffold", () => {
 });
 
 describe("HTTP operations", () => {
+  it("serves the exact OpenAI domain challenge only when configured", async () => {
+    const token = "openai-domain-challenge-test-token";
+    const configured = await start({
+      config: testConfig({ openAiAppsChallenge: token }),
+      handlers: successHandlers(),
+    });
+    const challenge = await fetch(
+      new URL("/.well-known/openai-apps-challenge", configured.baseUrl),
+    );
+
+    expect(challenge.status).toBe(200);
+    expect(challenge.headers.get("content-type")).toBe(
+      "text/plain; charset=utf-8",
+    );
+    expect(await challenge.text()).toBe(token);
+
+    const unconfigured = await start({
+      config: testConfig(),
+      handlers: successHandlers(),
+    });
+    const missing = await fetch(
+      new URL("/.well-known/openai-apps-challenge", unconfigured.baseUrl),
+    );
+    expect(missing.status).toBe(404);
+  });
+
   it("reports health and policy readiness without secrets", async () => {
     const { baseUrl } = await start({
       config: testConfig(),
@@ -579,5 +611,20 @@ describe("configuration", () => {
     ).toThrow();
     expect(() => loadMcpConfig({ LETS_ENV: "prod" })).toThrow();
     expect(() => loadMcpConfig({ LETS_ENV: "preview" })).toThrow();
+  });
+
+  it("accepts a single-line OpenAI domain challenge token", () => {
+    expect(
+      loadMcpConfig({
+        LETS_ENV: "test",
+        LETS_OPENAI_APPS_CHALLENGE: "challenge-token",
+      }),
+    ).toMatchObject({ openAiAppsChallenge: "challenge-token" });
+    expect(() =>
+      loadMcpConfig({
+        LETS_ENV: "test",
+        LETS_OPENAI_APPS_CHALLENGE: "challenge-token\n",
+      }),
+    ).toThrow();
   });
 });
