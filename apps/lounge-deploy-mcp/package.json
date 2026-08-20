@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "pnpm generate:policy-bundle && tsc -p tsconfig.build.json",
+    "build": "corepack pnpm --filter @letscoding/lounge-deploy-mcp^... run build && corepack pnpm generate:policy-bundle && tsc -p tsconfig.build.json",
     "generate:policy-bundle": "node scripts/generate-policy-bundle.ts",
     "lint": "eslint src scripts --max-warnings=0",
     "test": "vitest run",
