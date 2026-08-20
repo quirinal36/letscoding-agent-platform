@@ -1,3 +1,14 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+
+import { loungeDeployHttpHandler } from "./runtime.js";
+
+export default async function handler(
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<void> {
+  await loungeDeployHttpHandler(request, response);
+}
+
 export {
   createLoungeDeployMcpServer,
   MCP_TOOL_NAMES,
