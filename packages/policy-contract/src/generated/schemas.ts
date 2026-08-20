@@ -357,7 +357,7 @@ export const policyDocumentSchema: SchemaObject = {
     runtimeEnv: {
       title: "PolicyRuntimeEnvRule",
       description:
-        "공개 런타임 값 전달 규칙. 차단 자체는 files.blockedFilenames가 담당한다.",
+        "런타임 환경변수 처리 규칙. ZIP 차단 자체는 files.blockedFilenames가 담당한다.",
       type: "object",
       additionalProperties: false,
       required: [
@@ -368,7 +368,7 @@ export const policyDocumentSchema: SchemaObject = {
       ],
       properties: {
         attachSeparately: {
-          description: ".env를 ZIP에 넣지 않고 별도로 첨부하는지 여부.",
+          description: ".env를 ZIP에 넣지 않고 별도 전달을 허용하는지 여부.",
           type: "boolean",
         },
         browserObject: {

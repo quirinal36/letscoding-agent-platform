@@ -50,7 +50,8 @@ export const checkMessagesKo: Record<string, string> = {
     "단일 최상위 wrapper 폴더 밖에 다른 파일을 둘 수 없습니다.",
   "entry.sizeInvalid": "ZIP 항목의 압축 해제 크기 정보가 올바르지 않습니다.",
   "file.extensionNotAllowed": "허용되지 않은 확장자의 파일이 있습니다.",
-  "file.envIncluded": ".env 파일은 ZIP에 넣지 않고 별도로 첨부해야 합니다.",
+  "file.envIncluded":
+    ".env 파일은 ZIP, 공개 설정, 작품 배포물에 포함할 수 없습니다.",
   "file.runtimeConfigIncluded": "runtime-config.js는 ZIP에 포함할 수 없습니다.",
   "path.absolute": "절대 경로를 가진 항목이 있습니다.",
   "path.parentTraversal": "상위 디렉터리로 벗어나는 경로가 있습니다.",

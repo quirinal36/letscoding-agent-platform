@@ -129,7 +129,6 @@ export function createReport(input: CreateReportInput): CreateReportData {
       (dependency) =>
         `${dependency.kind}\0${dependency.origin}\0${dependency.purpose}`,
     ),
-    runtimeEnvNames: stableStrings(context?.runtimeEnvNames ?? []),
     remainingLimitations: stableStrings([
       ...(context?.remainingLimitations ?? []).map(safeReportString),
       ...automaticLimitations,
@@ -243,7 +242,7 @@ function renderMarkdown(report: CreateReportData["json"]): string {
           `${inline(kind)} ${inline(origin)} — ${escapeMarkdown(purpose)}`,
       ),
     ),
-    `- 공개 runtime env 이름: ${inline(report.runtimeEnvNames.join(", ") || "없음")}`,
+    "- 런타임 환경 변수: 값과 이름을 전달하거나 보고하지 않음",
     "",
     "## 남은 제한사항",
     "",

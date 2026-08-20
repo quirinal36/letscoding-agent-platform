@@ -17,6 +17,7 @@ import {
 
 const V1 = "2026-08-12.1";
 const V2 = "2026-08-12.2";
+const ACTIVE_VERSION = "2026-08-20.1";
 const HASH = "a".repeat(64);
 const ARTIFACT_HASH = "b".repeat(64);
 const context = {
@@ -46,7 +47,7 @@ async function inputFor(
     readonly warningWaivers?: ValidateArtifactInput["warningWaivers"];
   } = {},
 ): Promise<ValidateArtifactInput> {
-  const policyVersion = options.policyVersion ?? V2;
+  const policyVersion = options.policyVersion ?? ACTIVE_VERSION;
   const selected = await getPolicy(
     { policyId: "lounge-deploy", version: policyVersion },
     context,
@@ -95,13 +96,13 @@ describe("validate_artifact handler", () => {
 
     expect(result).toMatchObject({
       policyId: "lounge-deploy",
-      policyVersion: V2,
-      startingPolicyVersion: V2,
+      policyVersion: ACTIVE_VERSION,
+      startingPolicyVersion: ACTIVE_VERSION,
       decision: "PASS",
       pass: true,
       revalidationRequired: false,
       metadata: { artifactSha256: ARTIFACT_HASH, fileCount: 1 },
-      result: { pass: true, policy: { version: V2 } },
+      result: { pass: true, policy: { version: ACTIVE_VERSION } },
     });
   });
 

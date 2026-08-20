@@ -19,7 +19,7 @@ describe("Lounge Deploy plugin package", () => {
 
     expect(manifest).toMatchObject({
       name: "lounge-deploy",
-      version: "0.1.0",
+      version: "0.2.0",
       skills: "./skills/",
       mcpServers: "./.mcp.json",
     });
@@ -64,6 +64,20 @@ describe("Lounge Deploy plugin package", () => {
     expect(skill).not.toMatch(/30\s*MB|100\s*MB|500\s+files/i);
     expect(skill).not.toMatch(/maxCompressedBytes|maxUncompressedBytes/);
     expect(skill).not.toContain("upload_to_lounge");
+  });
+
+  it("includes optional score/ranking integration without adding a new MCP tool", async () => {
+    const skill = await readFile(
+      `${pluginRoot}skills/lounge-deploy/SKILL.md`,
+      "utf8",
+    );
+
+    expect(skill).toContain("Optional Lounge ranking integration");
+    expect(skill).toContain("LetscodingRanking.submitScore");
+    expect(skill).toContain("rankingSubmitted = false");
+    expect(skill).toContain("랭킹 SDK가 로드되지 않았어요");
+    expect(skill).toContain("error.message");
+    expect(skill).toContain("only when the user asks");
   });
 
   it("runs the bundled validator without workspace module resolution", async () => {
