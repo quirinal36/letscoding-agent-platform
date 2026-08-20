@@ -1,93 +1,101 @@
-# 렛츠코딩 에이전트 플랫폼
+# Lounge Deploy
 
-Lounge Deploy MCP와 공용 계약·검증 모듈을 함께 개발하는 TypeScript 모노레포다. 이 저장소의 런타임과 패키지 관리 기준은 [ADR-0005](docs/adr/0005-monorepo-toolchain.md)를 따른다.
+Lounge Deploy는 Codex에서 정적 웹 프로젝트를 **렛츠코딩 Lounge 수동 업로드용 ZIP**으로 만들고, 최신 Lounge 정책에 맞는지 검증해 주는 Plugin입니다.
 
-## 개발 환경
+단일 HTML 파일, HTML/CSS/JavaScript 사이트, Vite, Next.js static export를 지원합니다. 결과 ZIP은 사용자의 컴퓨터에서 만들며, 실제 Lounge 업로드·등록·공개는 사용자가 직접 합니다.
 
-- Node.js `>=24 <25`
-- Corepack
-- `pnpm@11.21.0`
+## 할 수 있는 일
+
+- 프로젝트가 Lounge 정적 배포에 맞는지 분석
+- 필요한 경우 최소한의 static export 설정 수정
+- 프로젝트 빌드와 ZIP 생성
+- ZIP의 파일 구조, 크기, 해시, 정책 위반 여부 검증
+- 정책 버전과 결과를 포함한 한국어 완료 보고서 작성
+
+## 설치
+
+Codex CLI에서 아래 명령을 한 번 실행합니다.
 
 ```sh
-corepack enable
-pnpm install --frozen-lockfile
-pnpm check
+codex plugin marketplace add quirinal36/letscoding-agent-platform \
+  --sparse .agents/plugins \
+  --sparse plugins/lounge-deploy
+
+codex plugin add lounge-deploy@letscoding-agent-platform
 ```
 
-`package.json#packageManager`, `.nvmrc`, `.node-version`, `engines`, lockfile을 함께 유지한다. pnpm 외의 패키지 관리자로 설치하거나 다른 종류의 lockfile을 루트에 추가하면 검사가 실패한다.
+설치한 뒤 새 Codex thread를 시작합니다. MCP 도구 목록에 `lounge-deploy`와 아래 도구가 보이면 준비가 끝난 것입니다.
 
-## 명령
+- `get_policy`
+- `analyze_project`
+- `validate_artifact`
+- `create_report`
 
-| 명령                      | 설명                                               |
-| ------------------------- | -------------------------------------------------- |
-| `pnpm lint`               | 전체 TypeScript와 JavaScript lint                  |
-| `pnpm format`             | Prettier로 지원 파일 포맷                          |
-| `pnpm format:check`       | 포맷 변경 없이 검사                                |
-| `pnpm typecheck`          | 모든 workspace 타입 검사                           |
-| `pnpm test`               | 모든 workspace test 실행                           |
-| `pnpm build`              | 의존 순서대로 모든 workspace 빌드                  |
-| `pnpm check`              | lint, format, build, typecheck, test 전체 실행     |
-| `pnpm audit:dependencies` | production graph의 high 이상 advisory 검사         |
-| `pnpm verify:plugin`      | Plugin manifest, MCP, Skill, marketplace 계약 검사 |
-| `pnpm verify:secrets`     | Git 추적 파일의 credential 패턴 검사               |
+## 사용 방법
 
-개별 workspace에서도 같은 `lint`, `typecheck`, `test`, `build` 명령을 실행할 수 있다.
-
-`tests/policy-contract`처럼 다른 workspace 패키지를 `workspace:*`로 참조하는
-workspace는 그 패키지의 `dist` 타입 선언을 사용한다. 따라서 `build`가
-`typecheck`, `test`보다 먼저 실행된다. 깨끗한 checkout에서는 `pnpm check` 또는
-`pnpm build` 뒤에 개별 명령을 실행한다.
-
-## 저장소 구조
+ZIP을 만들고 싶은 웹 프로젝트 폴더에서 Codex를 열고 요청합니다.
 
 ```text
-apps/lounge-deploy-mcp/       원격 MCP 서비스
-plugins/lounge-deploy/        Codex Plugin 배포 단위
-packages/policy-contract/     정책 계약
-packages/artifact-validator/  artifact 검증기
-packages/project-analyzer/    정적 배포 호환성 분석기
-packages/mcp-auth/            MCP 인증·권한 공통 모듈
-packages/audit-log/           감사 로그 공통 모듈
-policies/lounge-deploy/       중앙 정책 원본
-tests/policy-contract/        발행된 정책 트리의 참조 무결성 테스트
-tests/plugin-e2e/             실제 Vite/Next build 포함 clean-room Plugin E2E
-tests/operations/             정책 불변성·배포 workflow 운영 계약 테스트
-tests/fixtures/               공용 테스트 fixture
+이 프로젝트를 라운지 작품 업로드용 ZIP으로 만들고 검증해줘.
 ```
 
-`policies/`는 Prettier 대상이 아니다. 발행된 스냅샷은 불변이고
-`framework-guide.md`는 활성 스냅샷과 byte 단위로 같아야 하므로, 재포맷이 정책
-해시와 복사본 일치를 깨뜨린다.
+다음 요청도 사용할 수 있습니다.
 
-## Workspace 규칙
+```text
+이 Vite 프로젝트를 라운지용 정적 ZIP으로 만들어줘.
+이 Next.js 프로젝트가 라운지 정적 배포에 맞는지 검사해줘.
+이미 만든 ZIP을 라운지 정책으로 검증해줘.
+```
 
-- 앱은 공용 패키지를 `workspace:*` 의존성으로만 참조한다.
-- 공용 패키지는 `apps/`나 `plugins/`에 의존할 수 없다.
-- 내부 패키지 의존성은 반드시 해당 `package.json`에 직접 선언한다.
-- 각 TypeScript workspace의 공개 API는 `src/index.ts` 한 곳에서만 노출한다.
-- 소비자는 패키지 루트만 import한다. `exports`가 선언하지 않은 deep import는 허용하지 않는다.
-- 빌드는 ESM JavaScript, source map, TypeScript 선언과 declaration map을 `dist/`에 생성한다.
+Plugin은 다음 순서로 동작합니다.
 
-`packages/policy-contract`는 정책 Schema·타입·버전 규칙·오류 코드 계약을 제공한다. 자세한 규칙은 [패키지 README](packages/policy-contract/README.md)에 있다.
+1. 최신 Lounge 정책을 가져옵니다.
+2. 프로젝트의 정적 배포 가능 여부를 분석합니다.
+3. 필요한 경우 최소한의 변경만 적용하고 빌드합니다.
+4. 빌드 결과로 ZIP을 만듭니다.
+5. ZIP 생성 직전에 정책이 바뀌었는지 다시 확인하고, 바뀌었다면 새 정책으로 재검증합니다.
+6. 최종 ZIP과 한국어 검증 보고서를 전달합니다.
 
-`apps/lounge-deploy-mcp`는 공식 MCP SDK의 stateless Streamable HTTP transport와
-네 public 도구의 runtime 입출력 계약, 공통 오류 envelope, health/readiness 및
-Vercel `icn1` adapter를 제공한다. `get_policy`, `analyze_project`,
-`validate_artifact`, `create_report`는 각각 정책 저장소, 공용 분석기·검증기와 결정적
-보고서 생성기에 연결되어 있다.
+정책을 가져오거나 검증하는 데 실패하면, 오래된 정책을 사용해 성공했다고 말하지 않고 작업을 중단한 뒤 이유와 다음 조치를 알려줍니다.
 
-`packages/artifact-validator`는 manifest 결정적 검증과 Node.js용 ZIP·출력 폴더
-검사 API/CLI를 제공한다. ZIP byte와 파일 내용을 결과에 복사하지 않으며 stream
-inflate 제한, CRC/SHA-256, symlink 차단을 적용한다. 익명 MCP 접근 경계와 감사
-로그는 `packages/mcp-auth`, `packages/audit-log`에, 설치·실행 흐름은
-`plugins/lounge-deploy`에 구현되어 있다.
+## 내 파일과 데이터
 
-운영 절차는 [운영 인덱스](docs/operations/README.md)에 있다. CI는 세 운영체제의 전체
-검사, high dependency audit, 정책 history 불변성, Plugin/비밀 검사와 revision별 source
-artifact를 제공한다. production은 수동 workflow가 main의 정확한 SHA를 staging에서
-검증하고 traffic 없는 production deployment를 smoke한 뒤 승인된 같은 deployment만
-promote한다.
+프로젝트 소스와 ZIP은 로컬에서 처리합니다. MCP에는 검증에 필요한 제한된 metadata와 manifest, 파일 수·크기·hash, 구조화된 분석 결과만 전송합니다.
 
-Plugin은 로컬 ZIP을 만들고 검증할 뿐 실제 Lounge 등록·업로드·공개를 하지 않는다.
-지원, 보안 신고, 개인정보 및 이용 조건은 각각 [SUPPORT.md](SUPPORT.md),
-[SECURITY.md](SECURITY.md), [PRIVACY.md](PRIVACY.md), [TERMS.md](TERMS.md)를 따른다.
+전송하지 않는 정보:
+
+- 전체 소스 파일과 파일 내용
+- ZIP 원문
+- `.env` 값과 token
+- credential
+- 학생 개인정보
+
+ZIP에는 `.env`나 비밀값을 넣지 마세요. 공개 환경 변수도 필요한 경우 이름만 보고하고 값은 보내거나 보고하지 않습니다.
+
+## 최신 정책은 어떻게 반영되나요?
+
+각 작업의 시작과 최종 ZIP 검증 직전에 원격 MCP에서 현재 정책을 조회합니다. 따라서 용량, 허용 파일, 경로, framework 설정 같은 정책 변경은 Plugin을 다시 설치하지 않아도 다음 작업부터 적용됩니다.
+
+Plugin의 사용 흐름이나 검증기 자체가 업데이트된 경우에는 marketplace에서 Plugin을 업데이트한 뒤 새 thread를 시작하세요.
+
+## 알아둘 점
+
+- Lounge에 실제로 업로드하거나 작품을 공개하지 않습니다.
+- 서버 실행, API route, 동적 rendering이 필요한 프로젝트는 정적 배포가 불가능할 수 있습니다. 이때 Plugin은 임의로 기능을 흉내 내지 않고 제한 사항을 설명합니다.
+- 정책 오류는 우회하지 않습니다. 경고를 무시할 수 있는 경우에도 현재 정책이 허용하고 사용자가 사유를 명시적으로 확인해야 합니다.
+- lint, typecheck, 테스트를 끄거나 프로젝트를 대규모로 다시 작성하지 않습니다.
+
+## 문제가 생기면
+
+MCP 연결 또는 정책 조회 오류가 나면 다음을 확인하세요.
+
+1. 새 Codex thread에서 Plugin이 활성화되어 있는지 확인합니다.
+2. MCP 목록에 `lounge-deploy`가 표시되는지 확인합니다.
+3. 인터넷 연결 후 다시 시도합니다.
+4. 오류 코드와 생성된 ZIP 경로를 포함해 [지원 안내](SUPPORT.md)에 따라 문의합니다. `.env` 값, token, ZIP 원문은 보내지 마세요.
+
+## 개발·운영 문서
+
+Plugin을 개발하거나 운영하는 경우에는 [Plugin 개발 안내](plugins/lounge-deploy/README.md), [공개 Plugin 제출·게시 runbook](docs/operations/plugin-publication-runbook.md), [운영 문서 인덱스](docs/operations/README.md)를 참고하세요.
+
+지원, 보안 신고, 개인정보 및 이용 조건은 각각 [SUPPORT.md](SUPPORT.md), [SECURITY.md](SECURITY.md), [PRIVACY.md](PRIVACY.md), [TERMS.md](TERMS.md)를 따릅니다.
