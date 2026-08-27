@@ -32,7 +32,7 @@ describe("analyze_project handler", () => {
 
     expect(result).toMatchObject({
       policyId: "lounge-deploy",
-      policyVersion: "2026-08-20.1",
+      policyVersion: "2026-08-27.1",
       result: {
         pass: true,
         framework: { key: "single-html", confidence: "high" },

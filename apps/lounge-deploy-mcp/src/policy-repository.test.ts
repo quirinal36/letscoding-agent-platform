@@ -12,6 +12,7 @@ import {
 const V1 = "2026-08-12.1";
 const V2 = "2026-08-12.2";
 const V3 = "2026-08-20.1";
+const V4 = "2026-08-27.1";
 const FIXED_TIME = new Date("2026-08-13T00:00:00.000Z");
 const context = {
   requestId: "test-request",
@@ -28,6 +29,8 @@ beforeAll(async () => {
     [`history/${V2}.md`]: await policyFile(`history/${V2}.md`),
     [`history/${V3}.json`]: await policyFile(`history/${V3}.json`),
     [`history/${V3}.md`]: await policyFile(`history/${V3}.md`),
+    [`history/${V4}.json`]: await policyFile(`history/${V4}.json`),
+    [`history/${V4}.md`]: await policyFile(`history/${V4}.md`),
   };
 });
 
@@ -76,16 +79,16 @@ describe("get_policy repository", () => {
 
     expect(result).toMatchObject({
       policyId: "lounge-deploy",
-      version: V3,
+      version: V4,
       active: true,
-      activatedAt: "2026-08-20T00:00:00Z",
+      activatedAt: "2026-08-27T00:00:00Z",
       resolvedAt: FIXED_TIME.toISOString(),
-      effectiveAt: "2026-08-20T00:00:00Z",
+      effectiveAt: "2026-08-27T00:00:00Z",
     });
     expect(result.contentHash).toMatch(/^[a-f\d]{64}$/);
     expect(result.etag).toBe(`"sha256-${result.contentHash}"`);
     expect(result.guide).toContain("Lounge Deploy 정책 가이드");
-    expect(result.policy.version).toBe(V3);
+    expect(result.policy.version).toBe(V4);
   });
 
   it("replays a requested immutable version without reading current", async () => {
@@ -154,7 +157,7 @@ describe("get_policy repository", () => {
   });
 
   it("does not serve a corrupt snapshot or mismatched guide", async () => {
-    const corrupt = { ...files, [`history/${V3}.md`]: "tampered" };
+    const corrupt = { ...files, [`history/${V4}.md`]: "tampered" };
     await expectDomainCode(
       handler(sourceOf(corrupt))({ policyId: "lounge-deploy" }, context),
       "POLICY_BUNDLE_INVALID",
@@ -186,7 +189,7 @@ describe("get_policy repository", () => {
       { policyId: "lounge-deploy" },
       context,
     );
-    expect(result.version).toBe(V3);
+    expect(result.version).toBe(V4);
   });
 
   it("fails readiness when source validation or cancellation fails", async () => {

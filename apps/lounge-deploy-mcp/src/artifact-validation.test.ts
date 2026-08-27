@@ -17,7 +17,7 @@ import {
 
 const V1 = "2026-08-12.1";
 const V2 = "2026-08-12.2";
-const ACTIVE_VERSION = "2026-08-20.1";
+const ACTIVE_VERSION = "2026-08-27.1";
 const HASH = "a".repeat(64);
 const ARTIFACT_HASH = "b".repeat(64);
 const context = {
