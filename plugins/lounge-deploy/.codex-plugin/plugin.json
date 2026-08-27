@@ -1,7 +1,7 @@
 {
   "name": "lounge-deploy",
-  "version": "0.2.0",
-  "description": "Build and validate static Lounge upload ZIPs locally, with optional score/ranking SDK integration for games.",
+  "version": "0.3.0",
+  "description": "Build and validate static Lounge upload ZIPs locally, with optional score/ranking SDK and signed-in display name integration.",
   "author": {
     "name": "Let's Coding",
     "url": "https://github.com/quirinal36"
@@ -16,14 +16,15 @@
     "deployment",
     "validation",
     "ranking",
-    "game"
+    "game",
+    "display-name"
   ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Lounge Deploy",
     "shortDescription": "Build, validate, and rank-ready Lounge game ZIPs",
-    "longDescription": "Analyze a single HTML, static web, Vite, or Next.js project; make only the minimum static-export changes; build and inspect the output locally; and use the current Let's Coding policy for final manifest validation and a Korean completion report. For score-based games, it can add the Lounge ranking SDK only when requested. Source files, ZIP bytes, environment values, and credentials are not sent to the MCP server. Actual Lounge upload is not included.",
+    "longDescription": "Analyze a single HTML, static web, Vite, or Next.js project; make only the minimum static-export changes; build and inspect the output locally; and use the current Let's Coding policy for final manifest validation and a Korean completion report. For score-based games, it can add the Lounge ranking SDK only when requested, and it can read the signed-in visitor's display name from the Lounge same-origin API for on-screen display only. Source files, ZIP bytes, environment values, and credentials are not sent to the MCP server. Actual Lounge upload is not included.",
     "developerName": "Let's Coding",
     "category": "Developer Tools",
     "capabilities": ["Interactive", "Write"],
@@ -34,7 +35,8 @@
       "이 프로젝트를 라운지 작품 업로드용 ZIP으로 만들고 검증해줘",
       "이 Vite 프로젝트를 라운지용 정적 ZIP으로 만들어줘",
       "이 Next.js 프로젝트가 라운지 정적 배포에 맞는지 검사해줘",
-      "이 게임에 라운지 점수 등록과 랭킹 연동을 추가하고 ZIP으로 검증해줘"
+      "이 게임에 라운지 점수 등록과 랭킹 연동을 추가하고 ZIP으로 검증해줘",
+      "라운지 로그인 사용자 이름을 게임 화면에 표시하도록 연동해줘"
     ]
   }
 }

@@ -1,6 +1,6 @@
 ---
 name: lounge-deploy
-description: Build and validate a static ZIP for manual Let's Coding Lounge upload. Use for requests to package or check a single HTML file, plain HTML/CSS/JavaScript site, Vite build, Next.js static export, or an existing ZIP/output folder for Lounge deployment. Also use for requested Let's Coding Lounge score/ranking SDK integration in a score-based game. Use when the user asks in Korean for a 라운지 작품용 ZIP, 정적 배포 검사, 작품 업로드 준비, 점수 등록, or 랭킹 연동.
+description: Build and validate a static ZIP for manual Let's Coding Lounge upload. Use for requests to package or check a single HTML file, plain HTML/CSS/JavaScript site, Vite build, Next.js static export, or an existing ZIP/output folder for Lounge deployment. Also use for requested Let's Coding Lounge score/ranking SDK integration in a score-based game. Also use for a requested Lounge signed-in display name lookup in an uploaded work. Use when the user asks in Korean for a 라운지 작품용 ZIP, 정적 배포 검사, 작품 업로드 준비, 점수 등록, 랭킹 연동, or 로그인 사용자 이름 표시.
 ---
 
 # Lounge Deploy
@@ -117,6 +117,67 @@ without that request.
 6. In the final report, state the chosen score variable, every terminal
    function/location where submission was added, the modified files, and any
    local-test limitation caused by the SDK not being present.
+
+## Optional Lounge login display name
+
+Use this workflow only when the user asks to show the signed-in Lounge user's
+name inside the work. Do not add the call to an ordinary ZIP request, and do not
+add it to personalize a work that the user did not ask to personalize.
+
+1. Read the work before editing. Reuse the element that should carry the name,
+   or add one small element to the existing UI. Do not build a login screen, a
+   profile page, or a sign-in/sign-out control, and do not gate play behind the
+   name. Lounge owns login; the work only reads the name of a visitor who is
+   already signed in.
+2. Call the Play domain's same-origin API. Read the work ID from the
+   `<base href="/play/{작품ID}/">` that Lounge inserts, and send the request with
+   `credentials: "same-origin"`. Never place a Lounge session cookie, a user
+   UUID, a Supabase key, or any other credential or key in the work's code. A
+   suitable shape is:
+
+   ```js
+   async function loadDisplayName() {
+     const projectId = new URL(document.baseURI).pathname.split("/")[2];
+     if (!projectId) return null;
+
+     const response = await fetch(
+       `/api/me?projectId=${encodeURIComponent(projectId)}`,
+       { credentials: "same-origin" },
+     );
+     if (!response.ok) return null;
+
+     const { profile } = await response.json();
+     return profile?.display_name ?? null;
+   }
+   ```
+
+3. Write the returned `profile.display_name` with `textContent` only. It is text
+   another person chose, so never pass it to `innerHTML`,
+   `insertAdjacentHTML`, a raw-HTML template, or a URL. For example:
+
+   ```js
+   function showDisplayName(name) {
+     const element = document.getElementById("playerName");
+     if (element) element.textContent = name ?? "로그인 후 이용해 주세요.";
+   }
+   ```
+
+4. Keep the work fully usable without a name. Treat a missing work ID, a network
+   failure, and `401 Unauthorized` the same way: show the work's own Korean
+   fallback text and continue. A 401 means the visitor is not signed in or opened
+   the play URL directly. Local testing always takes this path, because the
+   inserted base tag and the Lounge API are absent outside `/play/{작품ID}/`.
+5. Use the name for display only. Do not store it, send it to another origin, or
+   use it as a score key, save-slot key, or any identifier. The response contains
+   no UUID, email, or token. Ranking submission verifies the login session on its
+   own, so never add a user identifier to a ranking call or to submitted score
+   data.
+6. `/api/me` is an intended Lounge same-origin API, not a local static asset and
+   not an external origin. Do not rewrite it to a relative path. When the current
+   policy reports a root-absolute asset finding for it, record that reason in the
+   user-facing waiver instead of changing the URL. In the final report, state the
+   modified files, the element that shows the name, and the fallback text shown
+   to a visitor who is not signed in.
 
 ## Policy and safety boundaries
 
