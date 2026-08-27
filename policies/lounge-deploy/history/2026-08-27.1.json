@@ -1,0 +1,394 @@
+{
+  "schemaVersion": 1,
+  "id": "lounge-deploy",
+  "version": "2026-08-27.1",
+  "effectiveAt": "2026-08-27T00:00:00Z",
+  "changeReason": "라운지 동일 출처 내부 API 호출과 로그인 표시 이름 조회 규칙을 정책 가이드에 명문화.",
+  "governance": {
+    "owner": "@quirinal36",
+    "approver": "@quirinal36",
+    "publishedAt": "2026-08-27T00:00:00Z"
+  },
+  "source": {
+    "repository": "https://github.com/yudanah/letscoding_lounge",
+    "commit": "e3b8a7016e78e98001595f1d8033ceeac7e6635a",
+    "synchronizedAt": "2026-08-12T13:23:29Z",
+    "files": [
+      {
+        "path": "framework_guide.md",
+        "sha256": "49c4e763f3d8b03b65a99a4832064474b2b74a8a3bb4c269958fd350751c349b"
+      },
+      {
+        "path": "src/lib/deploy-validation.ts",
+        "sha256": "bb52903734fb21ac72b20aeda9230aa2c93edba5f678d451ac0f389f7a83d17c"
+      },
+      {
+        "path": "src/lib/zip-inflate.ts",
+        "sha256": "94a9eb7801655f89da31a9b2f38e7d1652abf858bef2b56707bf18b864814dfb"
+      }
+    ]
+  },
+  "zip": {
+    "maxCompressedBytes": 31457280,
+    "maxUncompressedBytes": 104857600,
+    "maxEntries": 500,
+    "maxFiles": 500,
+    "maxPathLength": 180,
+    "requireForwardSlashes": true,
+    "requireRootIndexHtml": true,
+    "allowSingleWrapperDirectory": true,
+    "allowZip64": false,
+    "allowMultiDisk": false,
+    "codes": {
+      "compressedTooLarge": "LD_ZIP_COMPRESSED_TOO_LARGE",
+      "uncompressedTooLarge": "LD_ZIP_UNCOMPRESSED_TOO_LARGE",
+      "tooManyFiles": "LD_ZIP_TOO_MANY_FILES",
+      "missingRootIndexHtml": "LD_ZIP_MISSING_ROOT_INDEX_HTML",
+      "invalidFormat": "LD_ZIP_INVALID_FORMAT",
+      "tooManyEntries": "LD_ZIP_TOO_MANY_ENTRIES",
+      "pathTooLong": "LD_PATH_TOO_LONG",
+      "mixedWrapperRoots": "LD_ZIP_WRAPPER_MIXED_ROOTS",
+      "invalidEntrySize": "LD_ENTRY_SIZE_INVALID"
+    }
+  },
+  "files": {
+    "codes": {
+      "extensionNotAllowed": "LD_FILE_EXTENSION_NOT_ALLOWED"
+    },
+    "allowedExtensions": [
+      ".html",
+      ".htm",
+      ".css",
+      ".js",
+      ".mjs",
+      ".json",
+      ".md",
+      ".txt",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".svg",
+      ".webp",
+      ".ico",
+      ".mp3",
+      ".wav",
+      ".ogg",
+      ".mp4",
+      ".woff",
+      ".woff2",
+      ".ttf"
+    ],
+    "blockedFilenames": [
+      {
+        "match": "prefix",
+        "value": ".env",
+        "scope": "path-segment",
+        "caseSensitive": false,
+        "code": "LD_FILE_ENV_INCLUDED"
+      },
+      {
+        "match": "exact",
+        "value": "runtime-config.js",
+        "scope": "basename",
+        "caseSensitive": false,
+        "code": "LD_FILE_RUNTIME_CONFIG_INCLUDED"
+      }
+    ],
+    "blockedPathRules": [
+      {
+        "kind": "absolute-path",
+        "code": "LD_PATH_ABSOLUTE"
+      },
+      {
+        "kind": "parent-traversal",
+        "code": "LD_PATH_PARENT_TRAVERSAL"
+      },
+      {
+        "kind": "backslash-separator",
+        "code": "LD_PATH_BACKSLASH"
+      },
+      {
+        "kind": "control-character",
+        "code": "LD_PATH_CONTROL_CHARACTER"
+      },
+      {
+        "kind": "url-reinterpret",
+        "code": "LD_PATH_URL_REINTERPRET"
+      },
+      {
+        "kind": "non-normalized",
+        "code": "LD_PATH_NOT_NORMALIZED"
+      }
+    ]
+  },
+  "assetPaths": {
+    "disallowRootAbsolute": {
+      "enabled": true,
+      "code": "LD_ASSET_ROOT_ABSOLUTE"
+    }
+  },
+  "runtimeEnv": {
+    "attachSeparately": false,
+    "browserObject": "window.__LETS_RUNTIME_ENV__",
+    "forbidBundledSecrets": true,
+    "guideAnchor": "runtime-env"
+  },
+  "frameworks": [
+    {
+      "key": "plain-html",
+      "detect": {
+        "configFiles": [],
+        "dependencies": []
+      },
+      "artifactKinds": [
+        "single-html",
+        "zip"
+      ],
+      "expectedAssetPrefix": null,
+      "guideAnchor": "plain-html",
+      "checks": []
+    },
+    {
+      "key": "vite",
+      "detect": {
+        "configFiles": [
+          "vite.config.js",
+          "vite.config.mjs",
+          "vite.config.ts"
+        ],
+        "dependencies": [
+          "vite"
+        ]
+      },
+      "artifactKinds": [
+        "zip"
+      ],
+      "expectedAssetPrefix": "./assets/",
+      "guideAnchor": "vite",
+      "checks": [
+        "LD_VITE_ASSET_PREFIX_UNEXPECTED"
+      ]
+    },
+    {
+      "key": "nextjs",
+      "detect": {
+        "configFiles": [
+          "next.config.js",
+          "next.config.mjs",
+          "next.config.ts"
+        ],
+        "dependencies": [
+          "next"
+        ]
+      },
+      "artifactKinds": [
+        "zip"
+      ],
+      "expectedAssetPrefix": "./_next/",
+      "guideAnchor": "nextjs",
+      "checks": [
+        "LD_NEXT_ASSET_PREFIX_UNEXPECTED",
+        "LD_NEXT_SERVER_RUNTIME_REQUIRED"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "code": "LD_ZIP_COMPRESSED_TOO_LARGE",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.compressedTooLarge",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_UNCOMPRESSED_TOO_LARGE",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.uncompressedTooLarge",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_TOO_MANY_ENTRIES",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.tooManyEntries",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_TOO_MANY_FILES",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.tooManyFiles",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_INVALID_FORMAT",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.invalidFormat",
+      "guideAnchor": "zip-limits"
+    },
+    {
+      "code": "LD_ZIP_MISSING_ROOT_INDEX_HTML",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.missingRootIndexHtml",
+      "guideAnchor": "wrapper-directory"
+    },
+    {
+      "code": "LD_ZIP_WRAPPER_MIXED_ROOTS",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "zip.wrapperMixedRoots",
+      "guideAnchor": "wrapper-directory"
+    },
+    {
+      "code": "LD_ENTRY_SIZE_INVALID",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "entry.sizeInvalid",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_FILE_EXTENSION_NOT_ALLOWED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "file.extensionNotAllowed",
+      "guideAnchor": "allowed-extensions"
+    },
+    {
+      "code": "LD_FILE_ENV_INCLUDED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "file.envIncluded",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_FILE_RUNTIME_CONFIG_INCLUDED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "file.runtimeConfigIncluded",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_ABSOLUTE",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.absolute",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_PARENT_TRAVERSAL",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.parentTraversal",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_BACKSLASH",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.backslash",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_CONTROL_CHARACTER",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.controlCharacter",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_URL_REINTERPRET",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.urlReinterpret",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_NOT_NORMALIZED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.notNormalized",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_PATH_TOO_LONG",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "zip",
+      "titleKey": "path.tooLong",
+      "guideAnchor": "path-rules"
+    },
+    {
+      "code": "LD_OUTPUT_SOURCE_TREE_INCLUDED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "output-dir",
+      "titleKey": "output.sourceTreeIncluded",
+      "guideAnchor": "work-principles"
+    },
+    {
+      "code": "LD_ASSET_ROOT_ABSOLUTE",
+      "severity": "warning",
+      "waivable": true,
+      "appliesTo": "output-dir",
+      "titleKey": "asset.rootAbsolute",
+      "guideAnchor": "asset-paths"
+    },
+    {
+      "code": "LD_EXTERNAL_ORIGIN_REVIEW_REQUIRED",
+      "severity": "warning",
+      "waivable": true,
+      "appliesTo": "project",
+      "titleKey": "asset.externalOriginReview",
+      "guideAnchor": "asset-paths"
+    },
+    {
+      "code": "LD_VITE_ASSET_PREFIX_UNEXPECTED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "output-dir",
+      "titleKey": "framework.viteAssetPrefix",
+      "guideAnchor": "vite"
+    },
+    {
+      "code": "LD_NEXT_ASSET_PREFIX_UNEXPECTED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "output-dir",
+      "titleKey": "framework.nextAssetPrefix",
+      "guideAnchor": "nextjs"
+    },
+    {
+      "code": "LD_NEXT_SERVER_RUNTIME_REQUIRED",
+      "severity": "error",
+      "waivable": false,
+      "appliesTo": "project",
+      "titleKey": "framework.nextServerRuntime",
+      "guideAnchor": "nextjs"
+    }
+  ],
+  "guide": {
+    "path": "history/2026-08-27.1.md",
+    "sha256": "19d7269dd402b8d908bd75f160b3c5c43a579baf7b7c654ceb18c0a04a6580e6"
+  }
+}

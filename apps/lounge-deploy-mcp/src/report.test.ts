@@ -12,7 +12,7 @@ import { createAnalyzeProjectHandler } from "./project-analysis.js";
 import { createReport } from "./report.js";
 import { createReportInputSchema, type CreateReportInput } from "./schemas.js";
 
-const VERSION = "2026-08-20.1";
+const VERSION = "2026-08-27.1";
 const FILE_HASH = "a".repeat(64);
 const ARTIFACT_HASH = "b".repeat(64);
 const context = {
@@ -143,9 +143,9 @@ describe("create_report", () => {
         },
         "pass": true,
         "policy": {
-          "analysisVersion": "2026-08-20.1",
+          "analysisVersion": "2026-08-27.1",
           "id": "lounge-deploy",
-          "version": "2026-08-20.1",
+          "version": "2026-08-27.1",
         },
         "status": "completed",
         "validation": {
@@ -161,7 +161,7 @@ describe("create_report", () => {
         "",
         "- 상태: **완료**",
         "- 통과: **예**",
-        "- 정책: \`lounge-deploy\` / \`2026-08-20.1\`",
+        "- 정책: \`lounge-deploy\` / \`2026-08-27.1\`",
         "- 검증 결정: \`PASS\`",
         "",
         "## 프로젝트",

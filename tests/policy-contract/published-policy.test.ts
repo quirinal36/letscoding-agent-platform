@@ -31,12 +31,12 @@ beforeAll(async () => {
 });
 
 describe("Lounge 구현에서 이관한 활성 정책", () => {
-  it("2026-08-20.1의 발행 책임과 원본을 고정한다", () => {
-    expect(policy.version).toBe("2026-08-20.1");
+  it("2026-08-27.1의 발행 책임과 원본을 고정한다", () => {
+    expect(policy.version).toBe("2026-08-27.1");
     expect(policy.governance).toEqual({
       owner: "@quirinal36",
       approver: "@quirinal36",
-      publishedAt: "2026-08-20T00:00:00Z",
+      publishedAt: "2026-08-27T00:00:00Z",
     });
     expect(policy.source).toMatchObject({
       repository: "https://github.com/yudanah/letscoding_lounge",
@@ -147,6 +147,15 @@ describe("Lounge 구현에서 이관한 활성 정책", () => {
     expect(
       policy.checks.find((check) => check.code === "LD_ASSET_ROOT_ABSOLUTE"),
     ).toMatchObject({ severity: "warning", waivable: true });
+  });
+
+  it("라운지 동일 출처 내부 API와 표시 이름 사용 규칙을 가이드에 고정한다", () => {
+    expect(guide).toContain('<a id="lounge-api"></a>');
+    expect(guide).toContain("/api/me?projectId=");
+    expect(guide).toContain('credentials: "same-origin"');
+    expect(guide).toContain("401 Unauthorized");
+    expect(guide).toContain("`textContent`로만 출력한다");
+    expect(guide).toContain("origin으로 보고하지 않는다");
   });
 
   it("현재 Lounge와의 의도적 차이를 migration note에 남긴다", async () => {
