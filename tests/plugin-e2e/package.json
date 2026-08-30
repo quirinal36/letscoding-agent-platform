@@ -12,7 +12,7 @@
     "@letscoding/lounge-deploy-mcp": "workspace:*",
     "@letscoding/policy-contract": "workspace:*",
     "@letscoding/project-analyzer": "workspace:*",
-    "next": "16.3.1",
+    "next": "16.3.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "vite": "8.2.2"
