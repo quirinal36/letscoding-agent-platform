@@ -8,7 +8,20 @@ description: Build and validate a static ZIP for manual Let's Coding Lounge uplo
 Produce a locally built ZIP and a policy-matched report. Never claim that the
 work was uploaded to Lounge.
 
-## Required workflow
+## Choose the publishing route
+
+This ZIP workflow is for external project directories and explicit ZIP requests.
+Inside Let's Coding Lounge Studio, use **라운지에 게시하기** for a new work or
+**라운지에 변경사항 적용하기** for a linked work. Studio packages, validates and
+uploads the saved project internally. Do not require a manual ZIP download/upload
+for that route. Review the work information, thumbnail, publication settings and
+any added/changed/deleted files in Studio's existing publishing flow. This plugin
+does not perform that publication or claim it succeeded.
+
+For project-aware thumbnail creation, use the sibling `lounge-thumbnail` skill.
+Creating a thumbnail does not authorize publishing the work.
+
+## Required ZIP workflow
 
 1. Call the Lounge Deploy MCP `get_policy` without a version before reading or
    changing the project. Record the returned policy ID, immutable version, and

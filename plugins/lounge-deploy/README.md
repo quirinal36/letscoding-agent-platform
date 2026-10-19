@@ -4,6 +4,15 @@ Codex에서 단일 HTML, 정적 HTML/CSS/JavaScript, Vite, Next.js 정적 export
 라운지 수동 업로드용 ZIP으로 만들고 최신 중앙 정책으로 검증하는 공개 Plugin이다.
 실제 Lounge 업로드·등록·공개는 수행하지 않는다.
 
+## 썸네일과 Studio 게시
+
+`skills/lounge-thumbnail/SKILL.md`는 현재 작품의 코드·배경·캐릭터를 참고해
+대화로 16:9 썸네일을 만드는 규격이다. Studio 에디터의 적용 지침은
+`letscoding_lounge/src/features/studio/lib/thumbnail-guidance.ts`에서 관리하며 함께 갱신한다.
+Studio에서는 저장 후 `라운지에 게시하기` 또는 `라운지에 변경사항 적용하기`에서
+썸네일을 선택하고 게시한다. 내부 압축·검증·업로드는 Studio가 처리한다.
+외부 프로젝트와 명시적 ZIP 요청에는 기존 검증 스킬을 사용한다.
+
 ## 개발 설치
 
 repository marketplace를 등록하고 Plugin을 설치한다.

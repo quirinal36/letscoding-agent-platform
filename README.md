@@ -4,6 +4,16 @@ Lounge Deploy는 Codex에서 정적 웹 프로젝트를 **렛츠코딩 Lounge �
 
 단일 HTML 파일, HTML/CSS/JavaScript 사이트, Vite, Next.js static export를 지원합니다. 결과 ZIP은 사용자의 컴퓨터에서 만들며, 실제 Lounge 업로드·등록·공개는 사용자가 직접 합니다.
 
+Studio 에디터에는 별도의 직접 게시 경로가 있습니다. 저장 후 **라운지에 게시하기**
+(기존 연결 작품은 **라운지에 변경사항 적용하기**)에서 작품 정보와 변경사항을
+검토하면 Studio가 내부적으로 압축·검증·업로드합니다. 이 경로에서는 수동 ZIP
+업로드가 필요하지 않습니다. Plugin의 ZIP 검증 완료와 Studio 게시 완료는 다릅니다.
+
+[lounge-thumbnail 스킬](plugins/lounge-deploy/skills/lounge-thumbnail/SKILL.md)은
+현재 작품 디렉터리의 코드·배경·캐릭터를 파악하고 대화하면서 16:9 썸네일을 만듭니다.
+Studio 적용 코드는 `letscoding_lounge/src/features/studio`에 있으며,
+`lib/thumbnail-guidance.ts`가 이 규격의 에디터용 지침입니다. 규격 변경 시 함께 갱신합니다.
+
 ## 할 수 있는 일
 
 - 프로젝트가 Lounge 정적 배포에 맞는지 분석
