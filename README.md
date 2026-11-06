@@ -139,5 +139,6 @@ MCP 연결 또는 정책 조회 오류가 나면 다음을 확인하세요.
 Plugin을 개발하거나 운영하는 경우에는 [Plugin 개발 안내](plugins/lounge-deploy/README.md), [공개 Plugin 제출·게시 runbook](docs/operations/plugin-publication-runbook.md), [운영 문서 인덱스](docs/operations/README.md)를 참고하세요.
 
 Studio 모델 연동은 [Gadia API 활용 매뉴얼](docs/studio/gadia-api-manual.md)을 참고하세요. 연결 설정, 전체 모델 목록, 실제 API 호출 예시와 검증 범위를 정리했습니다.
+현재 사용 가능한 모델은 매주 확인하는 [Gadia 최신 모델 목록](docs/studio/gadia-models.md)에서 확인할 수 있습니다.
 
 지원, 보안 신고, 개인정보 및 이용 조건은 각각 [SUPPORT.md](SUPPORT.md), [SECURITY.md](SECURITY.md), [PRIVACY.md](PRIVACY.md), [TERMS.md](TERMS.md)를 따릅니다.
