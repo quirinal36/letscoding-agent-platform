@@ -141,5 +141,6 @@ Plugin을 개발하거나 운영하는 경우에는 [Plugin 개발 안내](plugi
 Studio 모델 연동은 [Gadia API 활용 매뉴얼](docs/studio/gadia-api-manual.md)을 참고하세요. 연결 설정, 전체 모델 목록, 실제 API 호출 예시와 검증 범위를 정리했습니다.
 현재 사용 가능한 모델은 매주 확인하는 [Gadia 최신 모델 목록](docs/studio/gadia-models.md)에서 확인할 수 있습니다.
 이미지·영상·음악 생성 모델은 [kie.ai API 활용 매뉴얼](docs/studio/kie-api-manual.md)에 연결 설정, 비동기 작업 흐름, 전체 모델 목록을 정리했습니다.
+라운지와 스튜디오가 실제로 쓰는 OpenRouter는 [OpenRouter API 활용 매뉴얼](docs/studio/openrouter-api-manual.md)과 [OpenRouter 최신 모델 목록](docs/studio/openrouter-models.md)에 정리했습니다.
 
 지원, 보안 신고, 개인정보 및 이용 조건은 각각 [SUPPORT.md](SUPPORT.md), [SECURITY.md](SECURITY.md), [PRIVACY.md](PRIVACY.md), [TERMS.md](TERMS.md)를 따릅니다.
