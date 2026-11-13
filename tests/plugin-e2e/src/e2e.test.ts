@@ -181,7 +181,7 @@ describe("failure and policy transition journeys", () => {
         pass: false,
         decision: "REVALIDATION_REQUIRED",
         startingPolicyVersion: "2026-08-12.1",
-        policyVersion: "2026-08-27.1",
+        policyVersion: "2026-11-13.1",
       });
 
       const current = await getPolicy(
