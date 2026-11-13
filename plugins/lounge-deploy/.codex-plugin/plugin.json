@@ -1,7 +1,7 @@
 {
   "name": "lounge-deploy",
-  "version": "0.3.0",
-  "description": "Prepare project-aware Lounge thumbnails and validate static upload ZIPs, with Studio publishing guidance and optional ranking/display name integration.",
+  "version": "0.4.0",
+  "description": "Prepare project-aware Lounge thumbnails and validate static upload ZIPs, with Studio publishing guidance and optional ranking/display name/1:1 match integration.",
   "author": {
     "name": "Let's Coding",
     "url": "https://github.com/quirinal36"
@@ -18,6 +18,7 @@
     "ranking",
     "game",
     "display-name",
+    "match",
     "thumbnail",
     "studio"
   ],
@@ -26,7 +27,7 @@
   "interface": {
     "displayName": "Lounge Deploy",
     "shortDescription": "Lounge thumbnails, static ZIP validation, and Studio guidance",
-    "longDescription": "Analyze a single HTML, static web, Vite, or Next.js project; make only the minimum static-export changes; build and inspect the output locally; and use the current Let's Coding policy for final manifest validation and a Korean completion report. For score-based games, it can add the Lounge ranking SDK only when requested, and it can read the signed-in visitor's display name from the Lounge same-origin API for on-screen display only. Source files, ZIP bytes, environment values, and credentials are not sent to the MCP server. Actual Lounge upload is not included. Create project-aware 16:9 thumbnails from the current project and its character/background assets. Studio users publish through the existing Lounge publishing form instead of manually uploading a ZIP.",
+    "longDescription": "Analyze a single HTML, static web, Vite, or Next.js project; make only the minimum static-export changes; build and inspect the output locally; and use the current Let's Coding policy for final manifest validation and a Korean completion report. For score-based games, it can add the Lounge ranking SDK only when requested, and it can read the signed-in visitor's display name from the Lounge same-origin API for on-screen display only. For two-player games, it can add the Lounge 1:1 match SDK (turn, round, or free mode) only when requested. Source files, ZIP bytes, environment values, and credentials are not sent to the MCP server. Actual Lounge upload is not included. Create project-aware 16:9 thumbnails from the current project and its character/background assets. Studio users publish through the existing Lounge publishing form instead of manually uploading a ZIP.",
     "developerName": "Let's Coding",
     "category": "Developer Tools",
     "capabilities": ["Interactive", "Write"],
@@ -39,6 +40,7 @@
       "이 Next.js 프로젝트가 라운지 정적 배포에 맞는지 검사해줘",
       "이 게임에 라운지 점수 등록과 랭킹 연동을 추가하고 ZIP으로 검증해줘",
       "라운지 로그인 사용자 이름을 게임 화면에 표시하도록 연동해줘",
+      "이 게임에 라운지 1:1 대결 기능을 넣어줘",
       "현재 프로젝트의 주제와 캐릭터를 파악해서 라운지 썸네일을 만들어줘"
     ]
   }

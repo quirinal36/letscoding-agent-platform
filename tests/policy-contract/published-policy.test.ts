@@ -31,12 +31,12 @@ beforeAll(async () => {
 });
 
 describe("Lounge 구현에서 이관한 활성 정책", () => {
-  it("2026-08-27.1의 발행 책임과 원본을 고정한다", () => {
-    expect(policy.version).toBe("2026-08-27.1");
+  it("2026-11-13.1의 발행 책임과 원본을 고정한다", () => {
+    expect(policy.version).toBe("2026-11-13.1");
     expect(policy.governance).toEqual({
       owner: "@quirinal36",
       approver: "@quirinal36",
-      publishedAt: "2026-08-27T00:00:00Z",
+      publishedAt: "2026-11-13T00:00:00Z",
     });
     expect(policy.source).toMatchObject({
       repository: "https://github.com/yudanah/letscoding_lounge",
@@ -147,6 +147,15 @@ describe("Lounge 구현에서 이관한 활성 정책", () => {
     expect(
       policy.checks.find((check) => check.code === "LD_ASSET_ROOT_ABSOLUTE"),
     ).toMatchObject({ severity: "warning", waivable: true });
+  });
+
+  it("라운지 1:1 대결 SDK 사용 규칙을 가이드에 고정한다", () => {
+    expect(guide).toContain('<a id="lounge-match"></a>');
+    expect(guide).toContain('<script src="/sdk/letscoding-match.js"></script>');
+    expect(guide).toContain("LetscodingMatch.resume()");
+    expect(guide).toContain("reportInvalid()");
+    expect(guide).toContain("채팅 문장이나 자유 입력 글을 싣지");
+    expect(guide).toContain("서로 다른 계정 두 개");
   });
 
   it("라운지 동일 출처 내부 API와 표시 이름 사용 규칙을 가이드에 고정한다", () => {

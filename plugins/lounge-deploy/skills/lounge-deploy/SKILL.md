@@ -1,6 +1,6 @@
 ---
 name: lounge-deploy
-description: Build and validate a static ZIP for manual Let's Coding Lounge upload. Use for requests to package or check a single HTML file, plain HTML/CSS/JavaScript site, Vite build, Next.js static export, or an existing ZIP/output folder for Lounge deployment. Also use for requested Let's Coding Lounge score/ranking SDK integration in a score-based game. Also use for a requested Lounge signed-in display name lookup in an uploaded work. Use when the user asks in Korean for a 라운지 작품용 ZIP, 정적 배포 검사, 작품 업로드 준비, 점수 등록, 랭킹 연동, or 로그인 사용자 이름 표시.
+description: Build and validate a static ZIP for manual Let's Coding Lounge upload. Use for requests to package or check a single HTML file, plain HTML/CSS/JavaScript site, Vite build, Next.js static export, or an existing ZIP/output folder for Lounge deployment. Also use for requested Let's Coding Lounge score/ranking SDK integration in a score-based game. Also use for a requested Lounge signed-in display name lookup in an uploaded work, and for a requested two-player Lounge 1:1 match (LetscodingMatch SDK). Use when the user asks in Korean for a 라운지 작품용 ZIP, 정적 배포 검사, 작품 업로드 준비, 점수 등록, 랭킹 연동, 로그인 사용자 이름 표시, or 1:1 대결.
 ---
 
 # Lounge Deploy
@@ -191,6 +191,43 @@ add it to personalize a work that the user did not ask to personalize.
    user-facing waiver instead of changing the URL. In the final report, state the
    modified files, the element that shows the name, and the fallback text shown
    to a visitor who is not signed in.
+
+## Optional Lounge 1:1 match
+
+Use this workflow only when the user asks for a two-player match between two
+Lounge users. Do not add it to a single-player work or to an ordinary ZIP
+request. The current policy guide's "라운지 1:1 대결 SDK" section is the contract;
+follow it and do not invent methods, events, or fields that it does not list.
+
+1. Choose the mode from the game: `turn` for alternating moves (chess, gomoku,
+   tic-tac-toe), `round` for simultaneous hidden choices revealed together
+   (rock-paper-scissors, quiz), `free` for each player playing separately and
+   sharing progress through `setStatus()` (score race). Opponent input arrives
+   about 1–2 seconds later, so do not use the SDK to synchronize positions in an
+   action game, and do not build chat. Report such requests as limitations.
+2. Load `<script src="/sdk/letscoding-match.js"></script>`. It is an intended
+   same-origin Play SDK: do not rewrite it to a relative path and do not report it
+   as an external origin; record the reason if a root-absolute asset finding is
+   reported.
+3. On start, call `LetscodingMatch.resume()` first and redraw the board from
+   `room.moves` (`{ seq, mine, data, round? }`). Offer "방 만들기"
+   (`create({ mode, first, turnSeconds })`, show `room.code` large) and "코드로
+   참가" (`join(code)`). React to `start`, `move`, `round`, `status`, `opponent`,
+   `drawOffer`, and `end` events; gate input on `room.myTurn`.
+4. Keep the game's own rule checks on both sides. Send moves with `send()` as
+   small objects or arrays. When the opponent's move breaks the rules, call
+   `reportInvalid()`. When the game ends, each side reports its own judgement
+   with `finish("win" | "loss" | "draw")`; draw the result screen from the `end`
+   event's `result`. Provide a resign button (`resign()`).
+5. Show `error.message` from a rejected call as-is. Write the opponent's
+   `room.opponent.name` with `textContent` only. Never put chat text or free
+   input in `data` or the status slot, and never add user IDs, cookies, or tokens.
+6. When `window.LetscodingMatch` is missing (local run, outside Lounge, Studio
+   preview), show Korean guidance and fall back to single-player or same-screen
+   play so the work never stops.
+7. In the final report, state the chosen mode, the modified files, the fallback
+   path, and that the match must be tested after publishing with two different
+   signed-in accounts entering through the Lounge work page's play button.
 
 ## Policy and safety boundaries
 
